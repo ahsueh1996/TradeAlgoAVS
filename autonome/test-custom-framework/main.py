@@ -12,12 +12,16 @@ class ChatHandler(BaseHTTPRequestHandler):
     def _send_error(self, message: str, status_code: int = 400):
         self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, GET')
-        self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+        self.cors_headers()
         self.end_headers()
         error_response = {'error': message + ":::: [Uncle Bob] custom error message end."}
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
+
+    def cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, PATCH, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization')
+
 
     def _validate_request(self, data: dict) -> Optional[ChatRequest]:
         if not isinstance(data, dict):
@@ -56,9 +60,7 @@ class ChatHandler(BaseHTTPRequestHandler):
         # Send response
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, GET')
-        self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+        self.cors_headers()
         self.end_headers()
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
@@ -66,7 +68,7 @@ class ChatHandler(BaseHTTPRequestHandler):
         self._send_error('[Uncle Bob] Method not allowed', 405)
 
 def run(server_class=HTTPServer, handler_class=ChatHandler, port=3000):
-    server_address = ('127.0.0.1', port)
+    server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print(f'Starting server on port {port}...')
     print(f'Chat endpoint available at http://localhost:{port}/chat')
