@@ -58,13 +58,16 @@ class ChatHandler(BaseHTTPRequestHandler):
         # Validate request schema
         validated_request = self._validate_request(request_json)
         if validated_request is None:
-            self._send_error('[Uncle Bob] Invalid request schema')
-            return
+            # The heartbeat health check thing send {message: "healthz"}, so we need to handle that
+            response: ChatResponse = {
+                'data': f"[Uncle Bob] Unknown Schema. Received: {request_json}"
+            }
 
-        # Process the request (echo for this example)
-        response: ChatResponse = {
-            'data': f"[Uncle Bob] Received: {validated_request['data']}"
-        }
+        else:
+            # Process the request (echo for this example)
+            response: ChatResponse = {
+                'data': f"[Uncle Bob] Received: {validated_request['data']}"
+            }
 
         # Send response
         self.send_response(200)
