@@ -13,9 +13,9 @@ class AgentResponse(TypedDict):
     message: str
 
 class ChatHandler(BaseHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.number_of_calls = 0
+    # Handler is a Singleton
+    # Use properties instead of instance variables (ie constructor)
+    number_of_calls = 0
 
     def _send_error(self, message: str, status_code: int = 400):
         self.send_response(status_code)
