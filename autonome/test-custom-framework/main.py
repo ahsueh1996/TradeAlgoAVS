@@ -13,7 +13,7 @@ class ChatHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        error_response = {'error': message}
+        error_response = {'error': message + ":::: custom error message end."}
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
 
     def _validate_request(self, data: dict) -> Optional[ChatRequest]:
@@ -60,7 +60,7 @@ class ChatHandler(BaseHTTPRequestHandler):
         self._send_error('Method not allowed', 405)
 
 def run(server_class=HTTPServer, handler_class=ChatHandler, port=3000):
-    server_address = ('', port)
+    server_address = ('127.0.0.1', port)
     httpd = server_class(server_address, handler_class)
     print(f'Starting server on port {port}...')
     print(f'Chat endpoint available at http://localhost:{port}/chat')
