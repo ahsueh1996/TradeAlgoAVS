@@ -8,7 +8,15 @@ class ChatRequest(TypedDict):
 class ChatResponse(TypedDict):
     data: str
 
+class AgentResponse(TypedDict):
+    number_of_calls: int
+    message: str
+
 class ChatHandler(BaseHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.number_of_calls = 0
+
     def _send_error(self, message: str, status_code: int = 400):
         self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
@@ -33,8 +41,9 @@ class ChatHandler(BaseHTTPRequestHandler):
         return ChatRequest(data=data['data'])
 
     def do_POST(self):
+        self.number_of_calls += 1
         if self.path != '/chat':
-            self._send_error('[Uncle Bob] Not found', 404)
+            self._send_error(f'[Uncle Bob] POST "{self.path}" Not found', 404)
             return
 
         # Read and parse request body
@@ -65,7 +74,24 @@ class ChatHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
     def do_GET(self):
-        self._send_error('[Uncle Bob] Method not allowed', 405)
+        self.number_of_calls += 1
+        if self.path == '/agents':
+            # Process the request (let's tell the user about how many times we've been called)
+            response: ChatResponse = {
+                'number_of_calls': self.number_of_calls,
+                'message': '[Uncle Bob] This is a GET request to /agents'
+            }
+
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        else:
+            self._send_error(f'[Uncle Bob] GET "{self.path}" Not found', 404)
+            return
+        # self._send_error('[Uncle Bob] Method not allowed', 405)
 
 def run(server_class=HTTPServer, handler_class=ChatHandler, port=3000):
     server_address = ('', port)
