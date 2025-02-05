@@ -12,8 +12,11 @@ class ChatHandler(BaseHTTPRequestHandler):
     def _send_error(self, message: str, status_code: int = 400):
         self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, GET')
+        self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
         self.end_headers()
-        error_response = {'error': message + ":::: custom error message end."}
+        error_response = {'error': message + ":::: [Uncle Bob] custom error message end."}
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
 
     def _validate_request(self, data: dict) -> Optional[ChatRequest]:
@@ -27,7 +30,7 @@ class ChatHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self.path != '/chat':
-            self._send_error('Not found', 404)
+            self._send_error('[Uncle Bob] Not found', 404)
             return
 
         # Read and parse request body
@@ -36,18 +39,18 @@ class ChatHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             request_json = json.loads(post_data.decode('utf-8'))
         except (KeyError, json.JSONDecodeError):
-            self._send_error('Invalid JSON payload')
+            self._send_error('[Uncle Bob] Invalid JSON payload')
             return
 
         # Validate request schema
         validated_request = self._validate_request(request_json)
         if validated_request is None:
-            self._send_error('Invalid request schema')
+            self._send_error('[Uncle Bob] Invalid request schema')
             return
 
         # Process the request (echo for this example)
         response: ChatResponse = {
-            'data': f"Received: {validated_request['data']}"
+            'data': f"[Uncle Bob] Received: {validated_request['data']}"
         }
 
         # Send response
@@ -60,7 +63,7 @@ class ChatHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
     def do_GET(self):
-        self._send_error('Method not allowed', 405)
+        self._send_error('[Uncle Bob] Method not allowed', 405)
 
 def run(server_class=HTTPServer, handler_class=ChatHandler, port=3000):
     server_address = ('127.0.0.1', port)
