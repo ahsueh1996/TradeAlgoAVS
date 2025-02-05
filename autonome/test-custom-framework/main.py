@@ -53,6 +53,9 @@ class ChatHandler(BaseHTTPRequestHandler):
         # Send response
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, GET')
+        self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
         self.end_headers()
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
