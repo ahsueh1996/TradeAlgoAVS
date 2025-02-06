@@ -73,10 +73,11 @@ class ChatHandler(BaseHTTPRequestHandler):
         else:
             # Process the request
             # We'll pass the data to the agentkit chat.
-
+            user_input = validated_request['data']
+            agent_output = self.server.human_message(user_input)
 
             response: ChatResponse = {
-                'data': f"[AgentKit+][{self.server.reqID}] Received: {validated_request['data']}"
+                'data': agent_output
             }
 
         # Send response
