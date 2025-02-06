@@ -2,9 +2,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 from typing import TypedDict, Optional
 
-from chatbot import run_chat_mode, initialize_agent
-
-import threading
+from chatbot import initialize_agent
+from langchain_core.messages import HumanMessage
 
 class ChatRequest(TypedDict):
     data: str
@@ -32,7 +31,6 @@ class ChatHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, PATCH, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization')
-
 
     def _validate_chat_schema(self, json_data: dict) -> Optional[ChatRequest]:
         if not isinstance(data, dict):
@@ -109,21 +107,35 @@ class ChatHandler(BaseHTTPRequestHandler):
         # self._send_error('[AgentKit+] Method not allowed', 405)
 
 class AgentKitServer(HTTPServer):
-    def __init__(self, address, handler):
+    def __init__(self, address, handler, executor, config):
         self.reqID = 0
+        self.executor = executor
+        self.config = config
         super().__init__(address, handler)
 
-def run(server_class=AgentKitServer, handler_class=ChatHandler, port=3000):
+    def human_message(self, user_input):
+        # Run agent with the user's input in chat mode
+        response = []
+        for chunk in self.executor.stream(
+            {"messages": [HumanMessage(content=user_input)]}, self.config
+        ):
+            if "agent" in chunk:
+                response.append(chunk["agent"]["messages"][0].content)
+            elif "tools" in chunk:
+                response.append(chunk["tools"]["messages"][0].content)
+            response.append("-------------------")
+        return "\n".join(response)
 
-    print(f'Starting chat agent thread...')
+def run(port=3000):
+
+    print(f'Initializing AgentKit Agent...')
     agent_executor, agent_config = initialize_agent()
-    chat_agent_thread = threading.Thread(target=run_chat_mode, daemon=True)
-    chat_agent_thread.start()
 
-    server_address = ('', port)
-    httpd = server_class(server_address, handler_class)
     print(f'Starting server on port {port}...')
-    print(f'Chat endpoint available at http://localhost:{port}/chat')
+    server_address = ('', port)
+    httpd = AgentKitServer(server_address, ChatHandler, agent_executor, agent_config)
+
+    print(f'Endpoints serving at http://0.0.0.0:{port}')
     httpd.serve_forever()
 
 if __name__ == '__main__':
