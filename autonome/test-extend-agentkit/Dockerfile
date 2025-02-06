@@ -10,6 +10,13 @@ EXPOSE 3000
 # Environment installs
 RUN pip install poetry
 RUN poetry install
+RUN pip install python-dotenv
+
+# Debugging purposes
+RUN pip list
 
 # Use CMD instead of RUN to avoid the main.py from getting run during docker build.
-CMD ["python", "main.py"]
+#CMD ["python", "main.py"]
+
+# Run the main.py file FOR "Compile" debug
+RUN python main.py
