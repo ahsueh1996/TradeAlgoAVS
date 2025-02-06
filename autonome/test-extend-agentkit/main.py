@@ -33,7 +33,7 @@ class ChatHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization')
 
     def _validate_chat_schema(self, json_data: dict) -> Optional[ChatRequest]:
-        if not isinstance(data, dict):
+        if not isinstance(json_data, dict):
             return None
         # expect either of:
         # {'data': str} OR
