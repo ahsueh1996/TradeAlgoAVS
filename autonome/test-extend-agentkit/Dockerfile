@@ -1,3 +1,4 @@
+# normal build command: docker buildx build --no-cache --platform linux/amd64 --push -t akfhsueh/autonome-test-extended-agentkit .
 FROM python:3.10
 
 # Copy all file and directories to /app folder of the container
@@ -9,14 +10,15 @@ EXPOSE 3000
 
 # Environment installs
 RUN pip install poetry
+RUN poetry config virtualenvs.create false && poetry install --no-root
 RUN poetry install
-RUN pip install python-dotenv
 
 # Debugging purposes
-RUN pip list
+# use: docker build --no-cache --progress=plain . 2>&1 | tee build.log
+#RUN pip list    
 
 # Use CMD instead of RUN to avoid the main.py from getting run during docker build.
-#CMD ["python", "main.py"]
+CMD ["python", "main.py"]
 
-# Run the main.py file FOR "Compile" debug
-RUN python main.py
+# Deubbing: Run the main.py file to see what breaks
+#RUN python main.py
