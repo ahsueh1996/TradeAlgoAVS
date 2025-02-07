@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "chatbot-python"
+name = "TaAVS"
 version = "0.0.1"
-description = "CDP AgentKit Example Chatbot"
+description = "TaAVS"
 authors = ["John Peterson <john.peterson@coinbase.com>"]
 readme = "README.md"
 package-mode = false
@@ -10,6 +10,8 @@ package-mode = false
 python = "^3.10"
 python-dotenv = "^1.0.1"
 cdp-langchain = "^0.0.13"
+wealthsimple-core = { path = "./wealthsimple-core", develop = true }
+wealthsimple-langchain = { path = "./wealthsimple-langchain", develop = true }
 
 [build-system]
 requires = ["poetry-core"]

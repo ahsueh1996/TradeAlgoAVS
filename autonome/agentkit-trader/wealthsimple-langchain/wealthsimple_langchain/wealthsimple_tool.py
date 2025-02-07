@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from twitter_langchain.twitter_api_wrapper import TwitterApiWrapper
 
 
-class TwitterTool(BaseTool):  # type: ignore[override]
+class WealthsimpleTool(BaseTool):  # type: ignore[override]
     """Tool for interacting with the Twitter API."""
 
     twitter_api_wrapper: TwitterApiWrapper
