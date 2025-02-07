@@ -1,42 +1,52 @@
-# CDP Agentkit LangChain Extension Examples - Chatbot Python
+# Autonome Framework: CDP Agentkit LangChain + Trading on Wealthsimple
+This is our main contribution on the AI agent side of the project.
+The innovation is in replacing traditional invesment funds by allowing profitable traders to share their strategies trustlessly with other investors. 
+This custom framework outlines a generic operator node and its capabilities to become a validated service operator that sits between strategy providers (the profitable traders wishing to share their strategy and earn additional rewards) and strategy users (investors).
 
-This example demonstrates an agent setup as a terminal style chatbot with access to the full set of CDP Agentkit actions.
+## Ask the chatbot to engage in the deFAI ecosystem!
+The agentic portion of this project is not strictly necessary. In explicit, you do not need a LLM and a natural language interface to implement the core functionalities of this framework. But LLM is necessary for some of the more interesting features that will help more beginners engage in the deFAI ecosystem.
 
-## Ask the chatbot to engage in the Web3 ecosystem!
-- "Transfer a portion of your ETH to john2879.base.eth"
-- "Deploy an NFT that will go super viral!"
-- "Choose a name for yourself and register a Basename for your wallet"
-- "Deploy an ERC-20 token with total supply 1 billion"
+| **Investor**                                                                                                         | Needs LLM?         |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Sign up and pay subscription to activate their account                                                           | no                 |
+| Give their WS credentials and never have to do it again unless it's wrong                                        | no                 |
+| Ask about strategies and which one is best for their goals                                                       | Yes                |
+| Request for a strategy to start running and give the symbol they want to use it with                             | no                 |
+| Ask about how their portfolio is doing including how many trades have been done, p&L                             | Could be dashboard |
+| Ask about anything else they want about the stock market news etc etc                                            | yes                |
+| **Strategy Provider**                                                                                                |                    |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Sign up and upload the strategy                                                                                  | No                 |
+| Ask about how their strategy is doing including how profitable it has been, how many investors have used it etc. | Could be dashboard |
+| Ask for feedback on the strength and weaknesses of that strategy                                                 | yes                |
 
-## Requirements
-- Python 3.10+
-- Poetry for package management and tooling
-  - [Poetry Installation Instructions](https://python-poetry.org/docs/#installation)
-- [CDP API Key](https://portal.cdp.coinbase.com/access/api)
-- [OpenAI API Key](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key)
+## Autonome Uploading Framework
 
-### Checking Python Version
-Before using the example, ensure that you have the correct version of Python installed. The example requires Python 3.10 or higher. You can check your Python version by running the following code:
+Docker build and upload.
 
 ```bash
-python --version
-poetry --version
+docker buildx build --no-cache --platform linux/amd64 --push -t {your username}/tradealgoavs .
 ```
 
-## Installation
+## Local Testing
+
+Create a new environment. I like to use Anaconda but you can use whatever you want. venv is great too. 
+
 ```bash
+pip install poetry
 poetry install
 ```
 
-## Run the Chatbot
-
-### Set ENV Vars
-- Ensure the following ENV Vars are set:
-  - "CDP_API_KEY_NAME"
-  - "CDP_API_KEY_PRIVATE_KEY"
-  - "OPENAI_API_KEY"
-  - "NETWORK_ID" (Defaults to `base-sepolia`)
-
+Setup your .env file to look like the following.
 ```bash
-make run
+CDP_API_KEY_NAME= "organizations/.../apiKeys/..."
+CDP_API_KEY_PRIVATE_KEY= "-----BEGIN EC PRIVATE KEY-----\n...............\n-----END EC PRIVATE KEY-----\n"
+OPENAI_API_KEY= "sk-...."
+```
+
+
+Open two terminals using the same environment and run each of the python file in their own terminal.
+```bash
+python main.py
+python local_user_test.py
 ```
