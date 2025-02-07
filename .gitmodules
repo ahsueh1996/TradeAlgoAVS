@@ -1,3 +1,6 @@
 [submodule "avs"]
 	path = avs
 	url = git@github.com:ehsueh/trade-algo-avs.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/kaohaohan/TradeAlgoAVS-frontend.git
