@@ -14,6 +14,8 @@ The agentic portion of this project is not strictly necessary. In explicit, you 
 | Request for a strategy to start running and give the symbol they want to use it with                             | no                 |
 | Ask about how their portfolio is doing including how many trades have been done, p&L                             | Could be dashboard |
 | Ask about anything else they want about the stock market news etc etc                                            | yes                |
+
+
 | **Strategy Provider**                                                                                                |                    |
 | ---------------------------------------------------------------------------------------------------------------- | ------------------ |
 | Sign up and upload the strategy                                                                                  | No                 |

@@ -3,8 +3,8 @@ from collections.abc import Callable
 from pydantic import BaseModel
 
 
-class TwitterAction(BaseModel):
-    """Twitter Action Base Class."""
+class WealthsimpleAction(BaseModel):
+    """Wealthsimple Action Base Class."""
 
     name: str
     description: str
