@@ -14,7 +14,8 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const SCHEMA_ID = process.env.NILLION_SCHEMA_ID;
+const NILLION_STRATEGY_SCHEMA_ID = process.env.NILLION_STRATEGY_SCHEMA_ID;
+const NILLION_INVESTOR_SCHEMA_ID = process.env.NILLION_INVESTOR_SCHEMA_ID;
 
 // Swagger Configuration
 const swaggerOptions = {
@@ -103,7 +104,7 @@ app.post('/strategies', async (req, res) => {
       risk
     }];
 
-    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, SCHEMA_ID);
+    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_STRATEGY_SCHEMA_ID);
     await collection.init();
     const dataWritten = await collection.writeToNodes(data);
     console.log(`Data written: ${JSON.stringify(dataWritten)}`);
@@ -131,13 +132,104 @@ app.post('/strategies', async (req, res) => {
  */
 app.get('/strategies', async (req, res) => {
   try {
-    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, SCHEMA_ID);
+    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_STRATEGY_SCHEMA_ID);
     await collection.init();
     const decryptedCollectionData = await collection.readFromNodes({});
 
     res.status(200).json(decryptedCollectionData);
   } catch (error) {
     console.error("Error retrieving strategies:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Investor:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *         - wallet_address
+ *         - twofa
+ *       properties:
+ *         email:
+ *           type: string
+ *         password:
+ *           type: string
+ *         wallet_address:
+ *           type: string
+ *         twofa:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /investors:
+ *   post:
+ *     summary: Create a new investor
+ *     tags:
+ *       - Investors
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Investor'
+ *     responses:
+ *       201:
+ *         description: Investor successfully created
+ *       500:
+ *         description: Internal server error
+ */
+app.post('/investors', async (req, res) => {
+  try {
+    const { email, password, wallet_address } = req.body;
+    const investorId = uuidv4();
+
+    const data = [{
+      _id: investorId,
+      email: { $share: email },
+      password: { $share: password },
+      wallet_address: { $share: wallet_address }
+    }];
+
+    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_INVESTOR_SCHEMA_ID);
+    await collection.init();
+    const dataWritten = await collection.writeToNodes(data);
+    console.log(`Investor created: ${JSON.stringify(dataWritten)}`);
+
+    res.status(201).json({ message: "Investor created successfully", id: investorId });
+  } catch (error) {
+    console.error("Error creating investor:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /investors:
+ *   get:
+ *     summary: Get all investors
+ *     tags:
+ *       - Investors
+ *     responses:
+ *       200:
+ *         description: List of investors
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/investors', async (req, res) => {
+  try {
+    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_INVESTOR_SCHEMA_ID);
+    await collection.init();
+    const decryptedCollectionData = await collection.readFromNodes({});
+
+    res.status(200).json(decryptedCollectionData);
+  } catch (error) {
+    console.error("Error retrieving investors:", error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Strategy Users Investors",
+    "title": "Trading Strategies",
     "type": "array",
     "items": {
         "type": "object",
@@ -10,7 +10,7 @@
                 "format": "uuid",
                 "coerce": true
             },
-            "email": {
+            "strategy_name": {
                 "type": "object",
                 "properties": {
                     "$share": {
@@ -19,7 +19,7 @@
                 },
                 "required": ["$share"]
             },
-            "password": {
+            "strategy_code": {
                 "type": "object",
                 "properties": {
                     "$share": {
@@ -28,7 +28,7 @@
                 },
                 "required": ["$share"]
             },
-            "twofa": {
+            "strategy_provider": {
                 "type": "object",
                 "properties": {
                     "$share": {
@@ -37,16 +37,16 @@
                 },
                 "required": ["$share"]
             },
-            "wallet_address": {
-                "type": "object",
-                "properties": {
-                    "$share": {
-                        "type": "string"
-                    }
-                },
-                "required": ["$share"]
+            "roi": {
+                "type": "number"
+            },
+            "profitability": {
+                "type": "number"
+            },
+            "risk": {
+                "type": "number"
             }
         },
-        "required": ["_id", "email", "password", "wallet_address"]
+        "required": ["_id", "strategy_name", "strategy_code", "strategy_provider", "roi", "profitability", "risk"]
     }
 }
