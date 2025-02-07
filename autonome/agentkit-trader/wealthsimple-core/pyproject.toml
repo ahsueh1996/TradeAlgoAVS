@@ -10,6 +10,7 @@ packages = [{ include = "wspy" }]
 python = "^3.10"
 cdp-sdk = "^0.15.0"
 pydantic = "^2.0"
+selenium = "^4.28.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.1"

@@ -1,3 +1,3 @@
-from client import Client
+from wspy.client import Client
 
 __all__ = [Client]
