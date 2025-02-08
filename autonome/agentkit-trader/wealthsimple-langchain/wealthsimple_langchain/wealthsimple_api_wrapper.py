@@ -13,6 +13,8 @@ class WealthsimpleApiWrapper(BaseModel):
     """Wrapper for Wealthsimple API."""
 
     client: Any | None = None
+    ws_email: str
+    ws_password: str
 
     @model_validator(mode="before")
     @classmethod
@@ -23,9 +25,9 @@ class WealthsimpleApiWrapper(BaseModel):
         """
 
         """Validate that Wealthsimple access token, token secret, and wspy exists in the environment."""
-        # actually we don't care about these. The operator is generic therefore we will pull these secrets later when necessary.
-        # ws_email = get_from_dict_or_env(values, "wealthsimple_email", "WS_EMAIL")
-        # ws_password = get_from_dict_or_env(values, "wealthsimple_email", "WS_PASSWORD")
+        # actually we don't want to have these. The operator is generic therefore we will pull these secrets later when necessary.
+        ws_email = get_from_dict_or_env(values, "ws_email", "WS_EMAIL")
+        ws_password = get_from_dict_or_env(values, "ws_password", "WS_PASSWORD")
 
         try:
             import wspy
@@ -39,6 +41,8 @@ class WealthsimpleApiWrapper(BaseModel):
         client = wspy.Client()  # Easiest client. 
 
         values["client"] = client
+        values["email"] = ws_email
+        values["password"] = ws_password
 
         return values
 
@@ -49,6 +53,12 @@ class WealthsimpleApiWrapper(BaseModel):
         """Run a Wealthsimple Action."""
         func_signature = inspect.signature(func)
         first_kwarg = next(iter(func_signature.parameters.values()), None)
+
+        # HACK
+        if 'email' in kwargs and 'passward' in kwargs:
+            print(f"[{str(func)}] Replacing login email and password with default .env secret!!")
+            kwargs['email'] = self.ws_email
+            kwargs['password'] = self.ws_password
 
         if first_kwarg and first_kwarg.annotation is wspy.Client:
             return func(self.client, **kwargs)

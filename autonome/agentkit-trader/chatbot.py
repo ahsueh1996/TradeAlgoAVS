@@ -56,7 +56,11 @@ def initialize_agent():
     # ===========================================================================================
     #                                       Wealthsimple Tools
     # ===========================================================================================
-
+    values = {}
+    values = {
+        "ws_email": os.environ.get("WS_EMAIL"),
+        "ws_password": os.environ.get("WS_PASSWORD")
+        }
     ws_wrapper = WealthsimpleApiWrapper(**values)
     ws_toolkit = WealthsimpleToolkit.from_wealthsimple_api_wrapper(ws_wrapper)
     ws_tools = ws_toolkit.get_tools()
