@@ -310,7 +310,7 @@ class Client():
         return
     
     def get_next_webactivity_time(self):
-        return random.randint(0.75,3) * 60  # Random interval in seconds
+        return random.randint(1,3) * 45  # Random interval in seconds
     
     def thread_keep_alive(self, start=True):
         # chron job every n minutes to mimic web activity
@@ -318,4 +318,4 @@ class Client():
         self.mimic_webactivity()
         next_interval = self.get_next_webactivity_time()
         print(f"Next mimic_webactivity scheduled in {next_interval} seconds.")
-        threading.Timer(next_interval, self.thread_mimic_webactivity).start()
+        threading.Timer(next_interval, self.thread_keep_alive).start()

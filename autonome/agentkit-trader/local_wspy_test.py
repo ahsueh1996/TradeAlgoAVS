@@ -8,6 +8,8 @@ WS_EMAIL = os.environ.get("WS_EMAIL")
 WS_PASSWORD = os.environ.get("WS_PASSWORD")
 
 client = Client()
+client.login(WS_EMAIL, WS_PASSWORD)
+
 while client.login_status != "OK":
     action = input("Action: ")
     if action == "login":
