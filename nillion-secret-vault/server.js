@@ -6,6 +6,9 @@ import swaggerJsDoc from 'swagger-jsdoc';
 import { v4 as uuidv4 } from 'uuid';
 import { SecretVaultWrapper } from 'nillion-sv-wrappers';
 import { orgConfig } from './nillionOrgConfig.js';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -16,6 +19,8 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 const NILLION_STRATEGY_SCHEMA_ID = process.env.NILLION_STRATEGY_SCHEMA_ID;
 const NILLION_INVESTOR_SCHEMA_ID = process.env.NILLION_INVESTOR_SCHEMA_ID;
+
+const upload = multer();
 
 // Swagger Configuration
 const swaggerOptions = {
@@ -33,44 +38,9 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     TradingStrategy:
- *       type: object
- *       required:
- *         - _id
- *         - strategy_name
- *         - strategy_code
- *         - strategy_provider
- *         - roi
- *         - profitability
- *         - risk
- *       properties:
- *         _id:
- *           type: string
- *           format: uuid
- *         strategy_name:
- *           type: string
- *         strategy_code:
- *           type: string
- *         strategy_provider:
- *           type: string
- *         roi:
- *           type: number
- *         profitability:
- *           type: number
- *         risk:
- *           type: number
- *       example:
- *         strategy_name: "Momentum Mountain"
- *         strategy_code: "asdfasdf codes"
- *         strategy_provider: "0x1b0ac0E93011e82066e8A6E97460c04010121156"
- *         roi: 10
- *         profitability: 25
- *         risk: 0
- */
+const chunkString = (str, length) => {
+    return str.match(new RegExp(`.{1,${length}}`, 'g')) || [];
+};
 
 /**
  * @swagger
@@ -82,39 +52,60 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/TradingStrategy'
+ *             type: object
+ *             properties:
+ *               strategy_name:
+ *                 type: string
+ *               strategy_code:
+ *                 type: string
+ *                 format: binary
+ *               strategy_provider:
+ *                 type: string
+ *               strategy_type:
+ *                 type: string
+ *               roi:
+ *                 type: number
+ *               profitability:
+ *                 type: number
+ *               risk:
+ *                 type: number
  *     responses:
  *       201:
  *         description: Strategy successfully created
  *       500:
  *         description: Internal server error
  */
-app.post('/strategies', async (req, res) => {
-  try {
-    const { strategy_name, strategy_code, strategy_provider, roi, profitability, risk } = req.body;
+app.post('/strategies', upload.single('strategy_code'), async (req, res) => {
+    try {
+        const { strategy_name, strategy_provider, strategy_type, roi, profitability, risk } = req.body;
+        const strategyCodeContent = req.file ? req.file.buffer.toString('utf8') : null;
+        const strategyCodeChunks = strategyCodeContent ? chunkString(strategyCodeContent, 1000) : [];
+        const strategyId = uuidv4();
 
-    const data = [{
-      strategy_name: { $allot: strategy_name },
-      strategy_code: { $allot: strategy_code },
-      strategy_provider: { $allot: strategy_provider },
-      roi,
-      profitability,
-      risk
-    }];
+        const data = [{
+            _id: strategyId,
+            name: { $allot: strategy_name },
+            code: { $allot: strategyCodeChunks },
+            provider: { $allot: strategy_provider },
+            strategy_type: { $allot: strategy_type },
+            roi: parseFloat(roi),
+            profitability: parseFloat(profitability),
+            risk: parseFloat(risk)
+        }];
 
-    const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_STRATEGY_SCHEMA_ID);
-    await collection.init();
-    const dataWritten = await collection.writeToNodes(data);
-    console.log(`Data written: ${JSON.stringify(dataWritten)}`);
-    const newIds = [...new Set(dataWritten.map((item) => item.result.data.created).flat())];
+        const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_STRATEGY_SCHEMA_ID);
+        await collection.init();
+        const dataWritten = await collection.writeToNodes(data);
+        console.log(`Data written: ${JSON.stringify(dataWritten)}`);
+        const newIds = [...new Set(dataWritten.map((item) => item.result.data.created).flat())];
 
-    res.status(201).json({ message: "Strategy created successfully", ids: newIds });
-  } catch (error) {
-    console.error("Error creating strategy:", error);
-    res.status(500).json({ error: error.message });
-  }
+        res.status(201).json({ message: "Strategy created successfully", ids: newIds });
+    } catch (error) {
+        console.error("Error creating strategy:", error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 /**
@@ -191,9 +182,9 @@ app.post('/investors', async (req, res) => {
 
     const data = [{
       _id: investorId,
-      email: { $share: email },
-      password: { $share: password },
-      wallet_address: { $share: wallet_address }
+      email: { $allot: email },
+      password: { $allot: password },
+      wallet_address: { $allot: wallet_address }
     }];
 
     const collection = new SecretVaultWrapper(orgConfig.nodes, orgConfig.orgCredentials, NILLION_INVESTOR_SCHEMA_ID);

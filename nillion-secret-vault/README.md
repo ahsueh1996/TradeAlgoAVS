@@ -21,7 +21,8 @@ This project provides a **secure backend API** for managing **trading strategies
 PORT=5000
 NILLION_ORG_SECRET=b0.....0031870
 NILLION_ORG_DID=did:nil:testnet:nill.....05la
-NILLION_SCHEMA_ID=08...d9
+NILLION_STRATEGY_SCHEMA_ID=08....f7d9
+NILLION_INVESTOR_SCHEMA_ID=40....4700
 ```
 
 ## 🏃 Running Locally
