@@ -70,6 +70,90 @@ class Client():
         self.login_status = "CREDS" # "BAD_CREDS", "OTP", "BAD_OTP", "OK"
         self.safe_webactivity_buttons = homepage_safe_buttons
 
+        # data = {
+        #     "AAPL": {
+        #         [
+        #             "price": 123.43,
+        #             "bid": 123.33,
+        #             "bid_size": 1000,
+        #             "ask": 124.12,
+        #             "ask_size": 1200,
+        #             "last": 123.43,
+        #             "last_size": 1000,
+        #             "time": 1234567890
+        #         ], ..
+        #     }, ..
+        # }
+        self.data = {}
+
+        '''
+        class MyStrategy(Strategy):
+            
+            client: Client
+             
+            def run():
+                given new data
+                emit buy and sell orders using the client
+
+            def get_statsistics()
+                cash - free money
+                holdings:
+                    lots:
+                        shares
+                        price_per_share                    
+                        $ - some money are meant to be shorts
+                could be too complex... maybe just have 
+
+                net deposits vs net worth (max drawdown, max profit)
+                equity vs cash split (exposure to risk, utilization rate)
+                SMA ROI (avg roi over last 30days)
+
+
+            free to define everything else as it is convenient to the strategy
+                - maybe positions are good because you by sell depending on each position (pinescript style)
+                    profitability makes sense here, cuz you can talk about per position
+                - maybe you work with orders and mix symbols together and just care about the final p&l (ws/tws style)  
+                    time to double, ROI vs time/compared to asap buy & hold asset is good.
+
+
+            positions = {
+                "AAPL": {
+                    "positions": [
+                        {
+                            "buy_order": "order-189b089d-68e9-4064-97f8-b8ddfe288fd4",
+                            "buy_status": "filled",
+                            "buy_size": 100,
+                            "buy_price": 231,
+                            "sell_order": None,
+                            "sell_status": "pending"
+                            "sell_size": None,
+                            "sell_price": None
+                        }, ..],
+                }, ..
+            }
+
+            closed_positions = {
+                "AAPL": {
+                    "positions": [
+                        {
+                            "buy_order": "order-189b089d-68e9-4064-97f8-b8ddfe288fd4",
+                            "buy_status": "filled",
+                            "buy_size": 100,
+                            "buy_price": 231,
+                            "sell_order": "order-189b089d-68e9-4064-97f8-b8ddfe288fd4",
+                            "sell_status": "filled"
+                            "sell_price": 231,
+                            "sell_size": 100
+                        }, ..],
+                    "cumulative_profit": 0,
+                    "max_exposure": 0,
+                    "current_exposure": 0,
+                    "max_drawdown": 0,
+                }, ..
+        }
+        '''
+        positions = {}
+
     # ====================================================================================================
     # capture bearer token from network log
     # ====================================================================================================
@@ -319,3 +403,10 @@ class Client():
         next_interval = self.get_next_webactivity_time()
         print(f"Next mimic_webactivity scheduled in {next_interval} seconds.")
         threading.Timer(next_interval, self.thread_keep_alive).start()
+
+    # ====================================================================================================
+    # Simulated Market
+    # ====================================================================================================
+
+
+    def poll_data(self, start=True):
