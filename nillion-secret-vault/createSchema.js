@@ -2,7 +2,7 @@ import { SecretVaultWrapper } from 'nillion-sv-wrappers';
 import { orgConfig } from './nillionOrgConfig.js';
 import { readFile } from 'fs/promises';
 
-const schema = JSON.parse(await readFile(new URL('./schema.json', import.meta.url)));
+const schema = JSON.parse(await readFile(new URL('./schema-strategy.json', import.meta.url)));
 
 async function main() {
   try {

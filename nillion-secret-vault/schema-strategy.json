@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Trading Strategies",
+    "title": "Strategies",
     "type": "array",
     "items": {
         "type": "object",
@@ -10,7 +10,7 @@
                 "format": "uuid",
                 "coerce": true
             },
-            "strategy_name": {
+            "name": {
                 "type": "object",
                 "properties": {
                     "$share": {
@@ -19,7 +19,7 @@
                 },
                 "required": ["$share"]
             },
-            "strategy_code": {
+            "strategy_type": {
                 "type": "object",
                 "properties": {
                     "$share": {
@@ -28,7 +28,28 @@
                 },
                 "required": ["$share"]
             },
-            "strategy_provider": {
+            "description": {
+                "type": "object",
+                "properties": {
+                    "$share": {
+                        "type": "string"
+                    }
+                },
+                "required": ["$share"]
+            },
+            "code": {
+                "type": "object",
+                "items": {
+                    "type": "string"
+                },
+                "minItems": 1,
+                "properties": {
+                    "$share": {
+                        "type": "string"
+                    }
+                }
+            },
+            "provider": {
                 "type": "object",
                 "properties": {
                     "$share": {
@@ -47,6 +68,6 @@
                 "type": "number"
             }
         },
-        "required": ["_id", "strategy_name", "strategy_code", "strategy_provider", "roi", "profitability", "risk"]
+        "required": ["_id", "name", "code", "provider", "roi", "profitability", "risk" ]
     }
 }
