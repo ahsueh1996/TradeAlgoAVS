@@ -17,12 +17,15 @@ class WealthsimpleApiWrapper(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: dict) -> Any:
-        """Validate that Wealthsimple access token, token secret, and tweepy exists in the environment."""
-        api_key = get_from_dict_or_env(values, "twitter_api_key", "TWITTER_API_KEY")
-        api_secret = get_from_dict_or_env(values, "twitter_api_secret", "TWITTER_API_SECRET")
-        access_token = get_from_dict_or_env(values, "twitter_access_token", "TWITTER_ACCESS_TOKEN")
-        access_token_secret = get_from_dict_or_env(values, "twitter_access_token_secret", "TWITTER_ACCESS_TOKEN_SECRET")
-        bearer_token = get_from_dict_or_env(values, "twitter_bearer_token", "TWITTER_BEARER_TOKEN")
+        """
+        You can use this to create a client.
+        You can also pass in overriding values to help create the client.
+        """
+
+        """Validate that Wealthsimple access token, token secret, and wspy exists in the environment."""
+        # actually we don't care about these. The operator is generic therefore we will pull these secrets later when necessary.
+        # ws_email = get_from_dict_or_env(values, "wealthsimple_email", "WS_EMAIL")
+        # ws_password = get_from_dict_or_env(values, "wealthsimple_email", "WS_PASSWORD")
 
         try:
             import wspy
@@ -30,33 +33,24 @@ class WealthsimpleApiWrapper(BaseModel):
             raise ImportError(
                 "wspy Wealthsimple SDK is not installed. "
 
-                "Please install it with `pip install wspy`"
+                "Please ensure the 'wealtsimple-core' package is installed or properly depended on in the poetry.toml file."
             ) from None
 
-        client = tweepy.Client(
-            consumer_key=api_key,
-            consumer_secret=api_secret,
-            access_token=access_token,
-            access_token_secret=access_token_secret,
-            bearer_token=bearer_token,
-            return_type=dict,
-        )
+        client = wspy.Client()  # Easiest client. 
 
         values["client"] = client
-        values["api_key"] = api_key
-        values["api_secret"] = api_secret
-        values["access_token"] = access_token
-        values["access_token_secret"] = access_token_secret
-        values["bearer_token"] = bearer_token
 
         return values
 
     def run_action(self, func: Callable[..., str], **kwargs) -> str:
+        # this is a generic piece of code we inherited from the cdp twitter wrapper.
+        # basically it take your kwargs and checks if it should be a self call... we've alerady initialized
+        # a client so it should use that client context to do everything.
         """Run a Wealthsimple Action."""
         func_signature = inspect.signature(func)
         first_kwarg = next(iter(func_signature.parameters.values()), None)
 
-        if first_kwarg and first_kwarg.annotation is tweepy.Client:
+        if first_kwarg and first_kwarg.annotation is wspy.Client:
             return func(self.client, **kwargs)
         else:
             return func(**kwargs)

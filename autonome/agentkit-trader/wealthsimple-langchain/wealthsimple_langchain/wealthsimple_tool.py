@@ -1,14 +1,4 @@
-"""Tool allows agents to interact with the Twitter API.
-
-To use this tool, you must first set as environment variables:
-    OPENAI_API_KEY
-    TWITTER_API_KEY
-    TWITTER_API_SECRET
-    TWITTER_ACCESS_TOKEN
-    TWITTER_ACCESS_TOKEN_SECRET
-    TWITTER_BEARER_TOKEN
-
-"""
+"""Tool allows agents to interact with the Wealthsimple API."""
 
 from collections.abc import Callable
 from typing import Any
@@ -17,13 +7,14 @@ from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel
 
-from twitter_langchain.twitter_api_wrapper import TwitterApiWrapper
+from wealthsimple_langchain.wealthsimple_api_wrapper import WealthsimpleApiWrapper
 
 
 class WealthsimpleTool(BaseTool):  # type: ignore[override]
-    """Tool for interacting with the Twitter API."""
+    """Tool for interacting with the Wealthsimple API."""
+    # this is a general class to help us define WS tools.
 
-    twitter_api_wrapper: TwitterApiWrapper
+    wealthsimple_api_wrapper: WealthsimpleApiWrapper
     name: str = ""
     description: str = ""
     args_schema: type[BaseModel] | None = None
@@ -35,7 +26,7 @@ class WealthsimpleTool(BaseTool):  # type: ignore[override]
         run_manager: CallbackManagerForToolRun | None = None,
         **kwargs: Any,
     ) -> str:
-        """Use the Twitter (X) API to run an operation."""
+        """Use the Wealthsimple API to run an operation."""
         if not instructions or instructions == "{}":
             # Catch other forms of empty input that GPT-4 likes to send.
             instructions = ""
@@ -44,4 +35,6 @@ class WealthsimpleTool(BaseTool):  # type: ignore[override]
             parsed_input_args = validated_input_data.model_dump()
         else:
             parsed_input_args = {"instructions": instructions}
-        return self.twitter_api_wrapper.run_action(self.func, **parsed_input_args)
+        # here if a tool were to have the first kwarg to be the wspy.Client, the wrapper will handle the connection with the intantialized client
+        return self.wealthsimple_api_wrapper.run_action(self.func, **parsed_input_args) 
+    

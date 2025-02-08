@@ -1,27 +1,28 @@
-"""TwitterToolkit."""
+"""WealthsimpleToolkit."""
+# this is essentially a collection of wealthsimple tools.
 
-from cdp_agentkit_core.actions.social.twitter import TWITTER_ACTIONS
+from cdp_agentkit_core.actions.finance.wealthsimple import WEALTHSIMPLE_ACTIONS  # this is actually where the WS tools are defined
 from langchain_core.tools import BaseTool
 from langchain_core.tools.base import BaseToolkit
 
-from twitter_langchain.twitter_api_wrapper import TwitterApiWrapper
-from twitter_langchain.twitter_tool import TwitterTool
+from wealthsimple_langchain.wealthsimple_api_wrapper import WealthsimpleApiWrapper
+from wealthsimple_langchain.wealthsimple_tool import WealthsimpleTool
 
 
-class TwitterToolkit(BaseToolkit):
-    """Twitter (X) Toolkit.
+class WealthsimpleToolkit(BaseToolkit):
+    """Wealthsimple (X) Toolkit.
 
     *Security Note*: This toolkit contains tools that can read and modify
         the state of a service; e.g., by creating, deleting, or updating,
         reading underlying data.
 
-        For example, this toolkit can be used post messages on Twitter (X).
+        For example, this toolkit can be used post messages on Wealthsimple (X).
 
         See [Security](https://python.langchain.com/docs/security) for more information.
 
     Setup:
         See detailed installation instructions here:
-        https://python.langchain.com/docs/integrations/tools/twitter/#installation
+        https://python.langchain.com/docs/integrations/tools/wealthsimple/#installation
 
         You will need to set the following environment
         variables:
@@ -38,16 +39,16 @@ class TwitterToolkit(BaseToolkit):
     Instantiate:
         .. code-block:: python
 
-            from twitter_langchain import TwitterToolkit
-            from twitter_langchain import TwitterAgentkitWrapper
+            from wealthsimple_langchain import WealthsimpleToolkit
+            from wealthsimple_langchain import WealthsimpleAgentkitWrapper
 
-            twitter = TwitterAgentkitWrapper()
-            twitter_toolkit = TwitterToolkit.from_twitter_api_wrapper(twitter)
+            wealthsimple = WealthsimpleAgentkitWrapper()
+            wealthsimple_toolkit = WealthsimpleToolkit.from_wealthsimple_api_wrapper(wealthsimple)
 
     Tools:
         .. code-block:: python
 
-            tools = twitter_toolkit.get_tools()
+            tools = wealthsimple_toolkit.get_tools()
             for tool in tools:
                 print(tool.name)
 
@@ -83,7 +84,7 @@ class TwitterToolkit(BaseToolkit):
         .. code-block:: none
 
             ================================ Human Message =================================
-            Please post 'hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa' to twitter
+            Please post 'hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa' to wealthsimple
             ================================== Ai Message ==================================
             Tool Calls:
                 post_tweet (call_xVx4BMCSlCmCcbEQG1yyebbq)
@@ -94,7 +95,7 @@ class TwitterToolkit(BaseToolkit):
             Name: post_tweet
             Successfully posted!
             ================================== Ai Message ==================================
-            The message "hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa" has been successfully posted to Twitter!
+            The message "hello, world! c4b8e3744c2e4345be9e0622b4c0a8aa" has been successfully posted to Wealthsimple!
 
             ...
             ==================================[1m Ai Message [0m==================================
@@ -110,23 +111,23 @@ class TwitterToolkit(BaseToolkit):
     tools: list[BaseTool] = []  # noqa: RUF012
 
     @classmethod
-    def from_twitter_api_wrapper(cls, twitter_api_wrapper: TwitterApiWrapper) -> "TwitterToolkit":
-        """Create a TwitterToolkit from a TwitterApiWrapper.
+    def from_wealthsimple_api_wrapper(cls, wealthsimple_api_wrapper: WealthsimpleApiWrapper) -> "WealthsimpleToolkit":
+        """Create a WealthsimpleToolkit from a WealthsimpleApiWrapper.
 
         Args:
-            twitter_api_wrapper: TwitterApiWrapper. The Twitter (X) API wrapper.
+            wealthsimple_api_wrapper: WealthsimpleApiWrapper. The Wealthsimple API wrapper.
 
         Returns:
-            TwitterToolkit. The Twitter toolkit.
+            WealthsimpleToolkit. The Wealthsimple toolkit.
 
         """
-        actions = TWITTER_ACTIONS
+        actions = WEALTHSIMPLE_ACTIONS
 
         tools = [
-            TwitterTool(
+            WealthsimpleTool(
                 name=action.name,
                 description=action.description,
-                twitter_api_wrapper=twitter_api_wrapper,
+                wealthsimple_api_wrapper=wealthsimple_api_wrapper,
                 args_schema=action.args_schema,
                 func=action.func,
             )
