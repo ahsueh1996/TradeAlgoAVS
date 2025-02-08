@@ -362,13 +362,12 @@ class Client():
     # ===================================================================================================================
     import curls.curl_modify as curl_modify
 
-    bearer_token = ""
-    securityIDs = {}
-    securityCurrency = {} # if the currency of the security is not USD, store it here
-    default_url = 'https://my.wealthsimple.com/graphql'
-    def send_request(curl, variables_input=None, json_data=None):
-        global bearer_token
-        global default_url
+
+    
+    def send_request(self, curl, variables_input=None, json_data=None):
+        default_url = 'https://my.wealthsimple.com/graphql'
+        bearer_token = self.bearer_token
+
         # update the headers with the bearer token
         headers = curl.headers
         headers["authorization"] = bearer_token
@@ -388,12 +387,7 @@ class Client():
             url = curl.url
         response = requests.post(url, headers=headers, json=json_data, cookies=curl.cookies)
         if response.status_code == 401:
-            print("*********** Authorization failed, please reauthorize by asking see_module to update authorization token! **************")
-            print("Authorization: "+bearer_token)
-            print("headers: ")
-            print(json.dumps(headers, indent=4))
-            print("json_data: ")
-            print(json.dumps(json_data, indent=4))
+            print("*********** Authorization failed, reauthorize by using scrape_bearer_token **************")
         elif response.status_code != 200:
             print("*********** Request failed, error code: "+str(response.status_code)+" **************")
             print("Response: "+json.dumps(response.json(), indent=4))
