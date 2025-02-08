@@ -18,9 +18,6 @@ WEALTHSIMPLE_ACTIONS = get_all_wealthsimple_actions()
 # Manually List out all the actions.. 
 __all__ = [
     "WEALTHSIMPLE_ACTIONS",
-    "AccountDetailsAction",
-    "AccountMentionsAction",
-    "PostTweetAction",
-    "PostTweetReplyAction",
-    "TwitterAction",
+    "LoginAction",
+    "OTPAction",
 ]

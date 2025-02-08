@@ -12,6 +12,9 @@ from langgraph.prebuilt import create_react_agent
 # Import CDP Agentkit Langchain Extension.
 from cdp_langchain.agent_toolkits import CdpToolkit
 from cdp_langchain.utils import CdpAgentkitWrapper
+# Import Wealthsimple Langchain Extension.
+from wealthsimple_langchain import WealthsimpleApiWrapper, WealthsimpleToolkit
+
 
 # Configure a file to persist the agent's CDP MPC Wallet Data.
 wallet_data_file = "wallet_data.txt"
@@ -23,6 +26,9 @@ def initialize_agent():
     # Initialize LLM.
     llm = ChatOpenAI(model="gpt-4o-mini")
 
+    # ===========================================================================================
+    #                                       CDP Agentkit Tools
+    # ===========================================================================================
     wallet_data = None
 
     if os.path.exists(wallet_data_file):
@@ -44,11 +50,23 @@ def initialize_agent():
 
     # Initialize CDP Agentkit Toolkit and get tools.
     cdp_toolkit = CdpToolkit.from_cdp_agentkit_wrapper(agentkit)
-    tools = cdp_toolkit.get_tools()
+    cdp_tools = cdp_toolkit.get_tools()
+
+    
+    # ===========================================================================================
+    #                                       Wealthsimple Tools
+    # ===========================================================================================
+
+    ws_wrapper = WealthsimpleApiWrapper({})
+    ws_toolkit = WealthsimpleToolkit.from_wealthsimple_api_wrapper(ws_wrapper)
+    ws_tools = ws_toolkit.get_tools()
+
+    tools = cdp_tools + ws_tools
+
 
     # Store buffered conversation history in memory.
     memory = MemorySaver()
-    config = {"configurable": {"thread_id": "CDP Agentkit Chatbot Example!"}}
+    config = {"configurable": {"thread_id": "TaAVS Agentkit Chatbot!"}}
 
     # Create ReAct Agent using the LLM and CDP Agentkit tools.
     return create_react_agent(
@@ -65,6 +83,8 @@ def initialize_agent():
             "you must say so, and encourage them to implement it themselves using the CDP SDK + Agentkit, "
             "recommend they go to docs.cdp.coinbase.com for more information. Be concise and helpful with your "
             "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
+            "You are also, a helpful agent that can help a user get logged in and interact with the Wealthsimple"
+            "finance platform."
         ),
     ), config
 
