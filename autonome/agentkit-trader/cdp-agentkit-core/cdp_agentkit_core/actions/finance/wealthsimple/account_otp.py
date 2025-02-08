@@ -21,6 +21,11 @@ You may answer in a natural language way to help the user get their OTP submitte
 
 class AccountOTPInput(BaseModel):
     """Input argument schema for WS account login action."""
+    email: str = Field(
+        ...,
+        description="The user's one-time passcode (OTP)",
+    )
+
 
 
 def account_otp(client: wspy.Client, email, password) -> str:
@@ -36,7 +41,7 @@ def account_otp(client: wspy.Client, email, password) -> str:
     return client.login_status
 
 
-class AccountLoginAction(WealthsimpleAction):
+class AccountOTPAction(WealthsimpleAction):
 
     name: str = "account_otp"
     description: str = ACCOUNT_OTP_PROMPT

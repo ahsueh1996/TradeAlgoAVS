@@ -2,7 +2,7 @@ from collections.abc import Callable
 from json import dumps
 
 import wspy
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from cdp_agentkit_core.actions.finance.wealthsimple.action import WealthsimpleAction
 
@@ -23,6 +23,15 @@ Sometimes the flow may be expedited. Account_login, receive "OK" status immediat
 
 class AccountLoginInput(BaseModel):
     """Input argument schema for WS account login action."""
+    email: str = Field(
+        ...,
+        description="The tweet id to post a reply to twitter",
+    )
+
+    password: str = Field(
+        ...,
+        description="The text of the tweet to post in reply to another tweet on twitter. Tweets can be maximum 280 characters.",
+    )
 
 
 def account_login(client: wspy.Client, email, password) -> str:

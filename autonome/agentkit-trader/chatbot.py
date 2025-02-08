@@ -57,7 +57,7 @@ def initialize_agent():
     #                                       Wealthsimple Tools
     # ===========================================================================================
 
-    ws_wrapper = WealthsimpleApiWrapper({})
+    ws_wrapper = WealthsimpleApiWrapper(**values)
     ws_toolkit = WealthsimpleToolkit.from_wealthsimple_api_wrapper(ws_wrapper)
     ws_tools = ws_toolkit.get_tools()
 
