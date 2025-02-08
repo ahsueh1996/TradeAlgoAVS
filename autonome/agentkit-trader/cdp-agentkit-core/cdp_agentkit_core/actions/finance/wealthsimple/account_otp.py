@@ -2,7 +2,7 @@ from collections.abc import Callable
 from json import dumps
 
 import wspy
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from cdp_agentkit_core.actions.finance.wealthsimple.action import WealthsimpleAction
 
