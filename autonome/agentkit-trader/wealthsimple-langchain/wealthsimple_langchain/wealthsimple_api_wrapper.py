@@ -55,7 +55,7 @@ class WealthsimpleApiWrapper(BaseModel):
         first_kwarg = next(iter(func_signature.parameters.values()), None)
 
         # HACK
-        if 'email' in kwargs and 'passward' in kwargs:
+        if 'email' in kwargs and 'password' in kwargs:
             print(f"[{str(func)}] Replacing login email and password with default .env secret!!")
             kwargs['email'] = self.ws_email
             kwargs['password'] = self.ws_password
