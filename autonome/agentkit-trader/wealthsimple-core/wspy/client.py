@@ -12,6 +12,7 @@ import time
 import random
 import threading
 import json
+import base64
 
 def get_driver():
     # Set up Selenium WebDriver
@@ -108,7 +109,7 @@ class Client():
         main_window = self.driver.current_window_handle
         self.windows["main"] = main_window
 
-    def login(self, email, password, duration=120, repeat=1):
+    def login(self, email, password, duration=30, repeat=1):
         if "main" not in self.windows:
             self.open_main_window(url=self.url_login)
         for _ in range(repeat):
@@ -118,20 +119,31 @@ class Client():
             print(f"Capturing network logs for {duration} seconds...")
             while time.time() - start_time < duration:
                 logs = self.driver.get_log('performance')
+                print(f"Found {len(logs)} logs...")
                 for entry in logs:
                     log = json.loads(entry['message'])['message']
-                    if 'Network.response' in log['method']:
+                    if 'Network.responseReceived' in log['method'] and "params" in log and 'response' in log['params']:
                         response = log['params']['response']
                         if 'url' in response and response['url'].endswith('token'):
-                            if "access_token" in response:
+                            print(f"Network log: {json.dumps(log,indent=4)}")
+                            try:
+                                response_body = self.driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': log["params"]["requestId"]})
+                                if response_body['base64Encoded']:
+                                    response_body['body'] = base64.b64decode(response_body['body']).decode('UTF-8')                               
+                                response_body = json.loads(response_body['body'])
+                            except Exception:
+                                response_body = {}
+                            print(f"Body: {json.dumps(response_body, indent=4)}")
+                            print("="*80)
+                            if "access_token" in response_body:
                                 # no need for otp, logged in
                                 # update bearer token
-                                self.bearer_token = response["access_token"]
+                                self.bearer_token = response_body["access_token"]
                                 self.login_status = "OK"
                                 return self.login_status
-                            elif "error" in response and "headers" in response:
+                            elif "error" in response_body and "headers" in response:
                                 response_headers = response['headers']
-                                if "x-wealthsimple-otp" in response_headers and "required" in response_headers[ "X-Wealthsimple-Otp"]:
+                                if "x-wealthsimple-otp" in response_headers and "required" in response_headers["x-wealthsimple-otp"]:
                                     self.login_status = "OTP"
                                     return self.login_status
                                 else:
@@ -141,7 +153,7 @@ class Client():
         self.login_status = "UNKNOWN,BAD_CREDS"
         return self.login_status
     
-    def otp(self, otp, duration=120, repeat=1):
+    def otp(self, otp, duration=30, repeat=1):
         for _ in range(repeat):
             start_time = time.time()
             self._login_otp(otp, duration=duration)
@@ -151,25 +163,32 @@ class Client():
                 logs = self.driver.get_log('performance')
                 for entry in logs:
                     log = json.loads(entry['message'])['message']
-                    if 'Network.response' in log['method']:
+                    if 'Network.responseReceived' in log['method'] and "params" in log and 'response' in log['params']:
                         response = log['params']['response']
                         if 'url' in response and response['url'].endswith('token'):
-                            if "access_token" in response:
+                            print(f"Network log: {json.dumps(log,indent=4)}")
+                            try:
+                                response_body = self.driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': log["params"]["requestId"]})
+                                if response_body['base64Encoded']:
+                                    response_body['body'] = base64.b64decode(response_body['body']).decode('UTF-8')                               
+                                response_body = json.loads(response_body['body'])
+                            except Exception:
+                                response_body = {}
+                            print(f"Body: {json.dumps(response_body, indent=4)}")
+                            print("="*80)
+                            if "access_token" in response_body:
                                 # no need for otp, logged in
                                 # update bearer token
-                                self.bearer_token = response["access_token"]
+                                self.bearer_token = response_body["access_token"]
                                 self.login_status = "OK"
                                 return self.login_status
-                            elif "error" in response and "headers" in response:
+                            elif "error" in response_body and "headers" in response:
                                 response_headers = response['headers']
-                                if "x-wealthsimple-otp" in response_headers and "required" in response_headers[ "X-Wealthsimple-Otp"]:
-                                    self.login_status = "OTP"
-                                    return self.login_status
-                                else:
-                                    self.login_status = "BAD_CREDS"
+                                if "x-wealthsimple-otp" in response_headers and "invalid" in response_headers["x-wealthsimple-otp"]:
+                                    self.login_status = "BAD_OTP"
                                     return self.login_status
                 time.sleep(1)
-        self.login_status = "UNKNOWN,BAD_CREDS"
+        self.login_status = "UNKNOWN,BAD_OTP"
         return self.login_status
 
     # function to login
