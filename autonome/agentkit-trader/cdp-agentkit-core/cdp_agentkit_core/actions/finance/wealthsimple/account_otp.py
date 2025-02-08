@@ -21,22 +21,20 @@ You may answer in a natural language way to help the user get their OTP submitte
 
 class AccountOTPInput(BaseModel):
     """Input argument schema for WS account login action."""
-    email: str = Field(
+    otp: str = Field(
         ...,
         description="The user's one-time passcode (OTP)",
     )
 
 
 
-def account_otp(client: wspy.Client, email, password) -> str:
+def account_otp(client: wspy.Client, otp) -> str:
     """
     Logs into the specified account
 
     Returns the current login status
     """
-    message = ""
-
-    client.login(email, password)
+    client.otp(otp)
 
     return client.login_status
 

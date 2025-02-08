@@ -25,12 +25,12 @@ class AccountLoginInput(BaseModel):
     """Input argument schema for WS account login action."""
     email: str = Field(
         ...,
-        description="The tweet id to post a reply to twitter",
+        description="The user's email",
     )
 
     password: str = Field(
         ...,
-        description="The text of the tweet to post in reply to another tweet on twitter. Tweets can be maximum 280 characters.",
+        description="The user's password",
     )
 
 
@@ -40,8 +40,6 @@ def account_login(client: wspy.Client, email, password) -> str:
 
     Returns the current login status
     """
-    message = ""
-
     client.login(email, password)
 
     return client.login_status
