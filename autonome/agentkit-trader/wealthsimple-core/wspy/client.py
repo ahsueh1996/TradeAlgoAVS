@@ -362,8 +362,6 @@ class Client():
     # ===================================================================================================================
     import curls.curl_modify as curl_modify
 
-
-    
     def send_request(self, curl, variables_input=None, json_data=None):
         default_url = 'https://my.wealthsimple.com/graphql'
         bearer_token = self.bearer_token
@@ -441,3 +439,20 @@ class Client():
                 response.status_code = 200.5 # we will use this to indicate that the request was successful but had errors
 
         return response
+    
+    # ===================================================================================================================
+    # High level WS API
+    # ===================================================================================================================
+
+    def modify_order(self, order_id, new_price):
+        response = self.send_request(curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
+        return response
+    
+    def create_order(self, symbol, quantity, price, side):
+        raise NotImplementedError
+    
+    def cancel_order(self, order_id):
+        reponse = self.send_request(curl_cancel, variables_input={"externalId": order_id})
+
+    def get_activity(self):
+        raise NotImplementedError
