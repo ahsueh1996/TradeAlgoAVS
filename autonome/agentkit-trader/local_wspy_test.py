@@ -16,4 +16,7 @@ while client.login_status != "OK":
         client.otp(action)
     print("Login Status: "+client.login_status)
 
+print("Starting thread to keep alive...")
+client.thread_keep_alive(start=True)
+
 input("End of test... (enter to exit)...")

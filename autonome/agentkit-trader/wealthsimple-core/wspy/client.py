@@ -68,6 +68,7 @@ class Client():
         self.bearer_token = ""
         self.cookies = None
         self.login_status = "CREDS" # "BAD_CREDS", "OTP", "BAD_OTP", "OK"
+        self.safe_webactivity_buttons = homepage_safe_buttons
 
     # ====================================================================================================
     # capture bearer token from network log
@@ -78,6 +79,7 @@ class Client():
         # TODO is to use the refresh token somehow
         for i in range(repeat):
             # refreash to home screen
+            self.driver.switch_to.window(self.windows['main'])
             self.driver.get(self.url_home)
             # and capture the bearer token
             start_time = time.time()
@@ -282,3 +284,38 @@ class Client():
     #     self.cookies = self.driver.get_cookies()
     #     # pickle.dump(self.cookies, open("cookies.pkl", "wb"))
     #     print("Cookies saved")
+
+    # ====================================================================================================
+    # mimic web activity
+    # ====================================================================================================
+
+    def mimic_webactivity(self):
+        # mimic web activity
+        # this is to prevent the website from logging us out
+        self.scrape_bearer_token()
+        time.sleep(3) # for sleep a couple seconds before trying to click around
+        # click on a random element out of a list of elements
+        target_number_of_clicks = random.randint(1, 5)
+        failed_clicks = 0
+        target_buttons = random.sample(self.safe_webactivity_buttons, target_number_of_clicks)
+        for each in target_buttons:
+            if self.driver.current_url != self.url_home:
+                break
+            try:
+                self.driver.find_elements(By.XPATH, xpath_buttons_on_homepage)[each].click()
+                time.sleep(0.5)
+            except:
+                failed_clicks += 1
+        print(f"\nClicked {target_number_of_clicks - failed_clicks} out of {target_number_of_clicks} buttons: {target_buttons}")
+        return
+    
+    def get_next_webactivity_time(self):
+        return random.randint(0.75,3) * 60  # Random interval in seconds
+    
+    def thread_keep_alive(self, start=True):
+        # chron job every n minutes to mimic web activity
+        # use a simple threading.Timer to do this
+        self.mimic_webactivity()
+        next_interval = self.get_next_webactivity_time()
+        print(f"Next mimic_webactivity scheduled in {next_interval} seconds.")
+        threading.Timer(next_interval, self.thread_mimic_webactivity).start()
