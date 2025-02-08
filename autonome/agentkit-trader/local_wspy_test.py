@@ -21,4 +21,13 @@ while client.login_status != "OK":
 print("Starting thread to keep alive...")
 client.thread_keep_alive(start=True)
 
+while True:
+    action = input("Action: ")
+    if action == "end":
+        break
+    elif action == "modify":
+        order_id = input("Order ID: ")
+        new_price = input("New Price: ")
+        client.send_request(client.curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
+
 input("End of test... (enter to exit)...")

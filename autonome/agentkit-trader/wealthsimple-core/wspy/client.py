@@ -361,9 +361,6 @@ class Client():
     # Low level WS API
     # ===================================================================================================================
     import curls.curl_modify as curl_modify
-    import curls.curl_cancel as curl_cancel
-    import curls.curl_create as curl_create
-    import curls.curl_fetch_activities as curl_fetch_activities
 
     bearer_token = ""
     securityIDs = {}
