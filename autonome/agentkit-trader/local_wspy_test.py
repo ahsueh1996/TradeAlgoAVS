@@ -16,4 +16,4 @@ while client.login_status != "OK":
         client.otp(action)
     print("Login Status: "+client.login_status)
 
-print("End.")
+input("End of test... (enter to exit)...")
