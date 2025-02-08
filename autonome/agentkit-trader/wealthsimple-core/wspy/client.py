@@ -12,6 +12,7 @@ import time
 import random
 import threading
 import json
+import base64
 
 def get_driver():
     # Set up Selenium WebDriver
@@ -32,7 +33,8 @@ def get_driver():
 
 xpath_input_email = '/html/body/div[1]/ws-card-loading-indicator/div/div/div/div/ng-transclude/div/layout/div/div[2]/main/login-wizard/wizard/div/div/ng-transclude/form/ws-micro-app-loader/login-form/span/div/span/div/div/div[2]/div[1]/div[1]/div/div[1]/input'
 xpath_input_password = '/html/body/div[1]/ws-card-loading-indicator/div/div/div/div/ng-transclude/div/layout/div/div[2]/main/login-wizard/wizard/div/div/ng-transclude/form/ws-micro-app-loader/login-form/span/div/span/div/div/div[2]/div[2]/div[1]/div[1]/div[1]/input'
-
+xpath_input_otp = '/html/body/div/ws-card-loading-indicator/div/div/div/div/ng-transclude/div/layout/div/div[2]/main/login-wizard/wizard/div/div/ng-transclude/form/login-two-factor-form/div/div/ws-micro-app-loader/two-factor-auth-details/span/div/div/div/div[1]/div/div[1]/div[1]/div/div[1]/input'
+#selector_input_otp = '#input--20ea5f40-61ba-4b38-9e4a-af1b399df6d0'
 
 xpath_crypto_price = '//*[@id="main"]/div/div/div[1]/div[3]/div/div[1]/div[1]/div/div/div/div/div[1]/p/div/div[1]'
 xpath_crypto_cent = '//*[@id="main"]/div/div/div[1]/div[3]/div/div[1]/div[1]/div/div/div/div/div[1]/p/div/div[1]/div/div[last()]'
@@ -65,15 +67,21 @@ class Client():
         self.windows = {}
         self.bearer_token = ""
         self.cookies = None
+        self.login_status = "CREDS" # "BAD_CREDS", "OTP", "BAD_OTP", "OK"
+        self.safe_webactivity_buttons = homepage_safe_buttons
 
     # ====================================================================================================
-    # capture header from network log
+    # capture bearer token from network log
     # ====================================================================================================
 
     def scrape_bearer_token(self, duration=60, repeat=2):
+        # default is to do it twice. during testing it nees twice to find the token
+        # TODO is to use the refresh token somehow
         for i in range(repeat):
+            # refreash to home screen
+            self.driver.switch_to.window(self.windows['main'])
             self.driver.get(self.url_home)
-            # main purpose is to capture the bearer token
+            # and capture the bearer token
             start_time = time.time()
             print(f"Capturing network logs for {duration} seconds...")
             while time.time() - start_time < duration:
@@ -83,11 +91,6 @@ class Client():
                     if log['method'] == 'Network.requestWillBeSent':
                         request = log['params']['request']
                         if 'url' in request and request['url'].endswith('graphql'):
-                            # print("=" * 80)
-                            # print(f"Request URL: {request['url']}")
-                            # print(f"Request Method: {request['method']}")
-                            # print(f"Request Headers: {json.dumps(request['headers'], indent=2)}")
-                            # print("=" * 80)
                             self.bearer_token = request['headers']['authorization']
                             if self.bearer_token == "":
                                 print("Bearer token not found, trying again...")
@@ -95,89 +98,113 @@ class Client():
                             return
                 time.sleep(1)
         return self.bearer_token
-
-    def scrape_login_response(self, email, password, duration=60, repeat=1):
-        for i in range(repeat):
-            self._login(email, password)
-            # main purpose is to capture the bearer token
-            start_time = time.time()
-            print(f"Capturing network logs for {duration} seconds...")
-            request_id = None
-            while time.time() - start_time < duration:
-                logs = self.driver.get_log('performance')
-                for entry in logs:
-                    log = json.loads(entry['message'])['message']
-                    if request_id == None and log['method'] == 'Network.requestWillBeSent':
-                        request = log['params']['request']
-                        """
-                        {
-                            "method": "Network.requestWillBeSent",
-                            "params": {
-                                "documentURL": "https://api.production.wealthsimple.com/v1/oauth/v2/token",
-                                "hasUserGesture": false,
-                                "initiator": {
-                                    "requestId": "17292.149",
-                                    "type": "preflight",
-                                    "url": "https://api.production.wealthsimple.com/v1/oauth/v2/token"
-                                },
-                                "loaderId": "",
-                                "redirectHasExtraInfo": false,
-                                "request": {
-                                    "headers": {
-                                        "Accept": "*/*",
-                                        "Access-Control-Request-Headers": "content-type,x-wealthsimple-client,x-ws-device-id,x-ws-profile,x-ws-session-id",
-                                        "Access-Control-Request-Method": "POST",
-                                        "Origin": "https://my.wealthsimple.com",
-                                        "Sec-Fetch-Mode": "cors",
-                                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
-                                    },
-                                    "initialPriority": "High",
-                                    "method": "OPTIONS",
-                                    "referrerPolicy": "strict-origin-when-cross-origin",
-                                    "url": "https://api.production.wealthsimple.com/v1/oauth/v2/token"
-                                },
-                                "requestId": "DED1396D67DCE6017132E4DB4589B003",
-                                "timestamp": 30173.647636,
-                                "type": "Other",
-                                "wallTime": 1738928111.829562
-                            }
-                        }
-                        """
-                        if 'url' in request and request['url'].endswith('token'):
-                            request_id = log["params"]["requestId"]
-                            print(json.dumps(request_id, indent=4))
-                    elif request_id != None:
-                        try:
-                            response = self.driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': request_id})
-                            print(json.dumps(response,indent=4))
-                            if response!=None and "access_token" in response:
-                                return 0
-                            elif response!=None and "error" in response:
-                                return -1
-                        except Exception as e:
-                            pass     
-                time.sleep(1)
-        return -1
-
+    
+    
     # ====================================================================================================
     # Login
     # ====================================================================================================
 
+    def open_main_window(self, url=None):
+        url = self.url_home if None else self.url_login
+        self.driver.get(url)
+        # register teh current window handle as main
+        main_window = self.driver.current_window_handle
+        self.windows["main"] = main_window
+
+    def login(self, email, password, duration=30, repeat=1):
+        if "main" not in self.windows:
+            self.open_main_window(url=self.url_login)
+        for _ in range(repeat):
+            start_time = time.time()
+            self._login(email, password, duration=duration)
+            # main purpose is to capture the bearer token
+            print(f"Capturing network logs for {duration} seconds...")
+            while time.time() - start_time < duration:
+                logs = self.driver.get_log('performance')
+                print(f"Found {len(logs)} logs...")
+                for entry in logs:
+                    log = json.loads(entry['message'])['message']
+                    if 'Network.responseReceived' in log['method'] and "params" in log and 'response' in log['params']:
+                        response = log['params']['response']
+                        if 'url' in response and response['url'].endswith('token'):
+                            print(f"Network log: {json.dumps(log,indent=4)}")
+                            try:
+                                response_body = self.driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': log["params"]["requestId"]})
+                                if response_body['base64Encoded']:
+                                    response_body['body'] = base64.b64decode(response_body['body']).decode('UTF-8')                               
+                                response_body = json.loads(response_body['body'])
+                            except Exception:
+                                response_body = {}
+                            print(f"Body: {json.dumps(response_body, indent=4)}")
+                            print("="*80)
+                            if "access_token" in response_body:
+                                # no need for otp, logged in
+                                # update bearer token
+                                self.bearer_token = response_body["access_token"]
+                                self.login_status = "OK"
+                                return self.login_status
+                            elif "error" in response_body and "headers" in response:
+                                response_headers = response['headers']
+                                if "x-wealthsimple-otp" in response_headers and "required" in response_headers["x-wealthsimple-otp"]:
+                                    self.login_status = "OTP"
+                                    return self.login_status
+                                else:
+                                    self.login_status = "BAD_CREDS"
+                                    return self.login_status
+                time.sleep(1)
+        self.login_status = "UNKNOWN,BAD_CREDS"
+        return self.login_status
+    
+    def otp(self, otp, duration=30, repeat=1):
+        for _ in range(repeat):
+            start_time = time.time()
+            self._login_otp(otp, duration=duration)
+            # main purpose is to capture the bearer token
+            print(f"Capturing network logs for {duration} seconds...")
+            while time.time() - start_time < duration:
+                logs = self.driver.get_log('performance')
+                for entry in logs:
+                    log = json.loads(entry['message'])['message']
+                    if 'Network.responseReceived' in log['method'] and "params" in log and 'response' in log['params']:
+                        response = log['params']['response']
+                        if 'url' in response and response['url'].endswith('token'):
+                            print(f"Network log: {json.dumps(log,indent=4)}")
+                            try:
+                                response_body = self.driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': log["params"]["requestId"]})
+                                if response_body['base64Encoded']:
+                                    response_body['body'] = base64.b64decode(response_body['body']).decode('UTF-8')                               
+                                response_body = json.loads(response_body['body'])
+                            except Exception:
+                                response_body = {}
+                            print(f"Body: {json.dumps(response_body, indent=4)}")
+                            print("="*80)
+                            if "access_token" in response_body:
+                                # no need for otp, logged in
+                                # update bearer token
+                                self.bearer_token = response_body["access_token"]
+                                self.login_status = "OK"
+                                return self.login_status
+                            elif "error" in response_body and "headers" in response:
+                                response_headers = response['headers']
+                                if "x-wealthsimple-otp" in response_headers and "invalid" in response_headers["x-wealthsimple-otp"]:
+                                    self.login_status = "BAD_OTP"
+                                    return self.login_status
+                time.sleep(1)
+        self.login_status = "UNKNOWN,BAD_OTP"
+        return self.login_status
+
     # function to login
-    def _login(self, email, password):
+    def _login(self, email, password, duration=60):
         print("Nav to login url...")
         self.driver.get(self.url_login)
         print("Logging in...")
         # check if input email and password fields are present
         ready = False
+        start_time = time.time()
         while not ready:
+            if time.time() - start_time >= duration:
+                return "TIMEOUT"
             try:
-                # check if url is the home page
-                if self.driver.current_url == self.url_home:
-                    print("Already logged in")
-                    print("Getting token...")
-                    self.scrape_bearer_token()
-                    return
                 # check if the email and password input fields are present
                 email_input = self.driver.find_element(By.XPATH, xpath_input_email)
                 password_input = self.driver.find_element(By.XPATH, xpath_input_password)
@@ -197,44 +224,98 @@ class Client():
         password_input.send_keys(Keys.RETURN)
         print("submitted login form")
 
-    def login(self, email, password):
-        # check if the cookies file exists
-        # if not, login and save cookies
-        if not os.path.exists("cookies.pkl"):
-            print("No cookies found. May require 2FA...")
-            self._login(email, password)
-            # wait for user to enter 2FA
-            input("Press Enter after you have entered 2FA")
-            self.save_cookies()
-        else:
-            # Load cookies
-            print("Loading cookies...")
-            cookies = pickle.load(open("cookies.pkl", "rb"))
-            for cookie in cookies:
-                self.driver.add_cookie(cookie)
-            # reload the page
-            print("Reloading page...")
-            self.driver.refresh()
-            self._login(email, password)
-            self.save_cookies()
+    # function to enter otp
+    def _login_otp(self, otp, duration=60):
+        # check if input email and password fields are present
+        ready = False
+        start_time = time.time()
+        while not ready:
+            if time.time() - start_time >= duration:
+                return "TIMEOUT"
+            try:
+                # check if the otp input fields are present
+                otp_input = self.driver.find_element(By.XPATH, xpath_input_otp)
+                ready = True
+            except:
+                print("Waiting for otp page to load...")
+                time.sleep(1)
+        # Find the email input field
+        otp_input = self.driver.find_element(By.XPATH, xpath_input_otp)
+        otp_input.send_keys(otp)
 
-        # wait until we get to the home page
-        while self.driver.current_url != self.url_home:
-            time.sleep(1)
-        print("Logged in successfully")
-        print("Getting token...")
+        # Submit the login form (usually pressing Enter works)
+        otp_input.send_keys(Keys.RETURN)
+        print("submitted otp form")
+
+    # def login(self, email, password):
+    #     # check if the cookies file exists
+    #     # if not, login and save cookies
+    #     if not os.path.exists("cookies.pkl"):
+    #         print("No cookies found. May require 2FA...")
+    #         self._login(email, password)
+    #         # wait for user to enter 2FA
+    #         input("Press Enter after you have entered 2FA")
+    #         self.save_cookies()
+    #     else:
+    #         # Load cookies
+    #         print("Loading cookies...")
+    #         cookies = pickle.load(open("cookies.pkl", "rb"))
+    #         for cookie in cookies:
+    #             self.driver.add_cookie(cookie)
+    #         # reload the page
+    #         print("Reloading page...")
+    #         self.driver.refresh()
+    #         self._login(email, password)
+    #         self.save_cookies()
+
+    #     # wait until we get to the home page
+    #     while self.driver.current_url != self.url_home:
+    #         time.sleep(1)
+    #     print("Logged in successfully")
+    #     print("Getting token...")
+    #     self.scrape_bearer_token()
+    #     print("Network logs captured")
+
+
+
+    # def save_cookies(self):
+    #     # Save cookies
+    #     print("Saving cookies...")
+    #     self.cookies = self.driver.get_cookies()
+    #     # pickle.dump(self.cookies, open("cookies.pkl", "wb"))
+    #     print("Cookies saved")
+
+    # ====================================================================================================
+    # mimic web activity
+    # ====================================================================================================
+
+    def mimic_webactivity(self):
+        # mimic web activity
+        # this is to prevent the website from logging us out
         self.scrape_bearer_token()
-        print("Network logs captured")
-
-        # get current window handle
-        main_window = self.driver.current_window_handle
-        self.windows["main"] = main_window
-
-    def save_cookies(self):
-        # Save cookies
-        print("Saving cookies...")
-        self.cookies = self.driver.get_cookies()
-        # pickle.dump(self.cookies, open("cookies.pkl", "wb"))
-        print("Cookies saved")
-
-        
+        time.sleep(3) # for sleep a couple seconds before trying to click around
+        # click on a random element out of a list of elements
+        target_number_of_clicks = random.randint(1, 5)
+        failed_clicks = 0
+        target_buttons = random.sample(self.safe_webactivity_buttons, target_number_of_clicks)
+        for each in target_buttons:
+            if self.driver.current_url != self.url_home:
+                break
+            try:
+                self.driver.find_elements(By.XPATH, xpath_buttons_on_homepage)[each].click()
+                time.sleep(0.5)
+            except:
+                failed_clicks += 1
+        print(f"\nClicked {target_number_of_clicks - failed_clicks} out of {target_number_of_clicks} buttons: {target_buttons}")
+        return
+    
+    def get_next_webactivity_time(self):
+        return random.randint(1,3) * 45  # Random interval in seconds
+    
+    def thread_keep_alive(self, start=True):
+        # chron job every n minutes to mimic web activity
+        # use a simple threading.Timer to do this
+        self.mimic_webactivity()
+        next_interval = self.get_next_webactivity_time()
+        print(f"Next mimic_webactivity scheduled in {next_interval} seconds.")
+        threading.Timer(next_interval, self.thread_keep_alive).start()

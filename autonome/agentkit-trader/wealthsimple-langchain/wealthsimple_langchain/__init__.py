@@ -1,11 +1,11 @@
-"""CDP Twitter Toolkit."""
+"""CDP wealthsimple Toolkit."""
 
-from twitter_langchain.twitter_api_wrapper import TwitterApiWrapper
-from twitter_langchain.twitter_tool import TwitterTool
-from twitter_langchain.twitter_toolkit import TwitterToolkit
+from wealthsimple_langchain.wealthsimple_api_wrapper import WealthsimpleApiWrapper
+from wealthsimple_langchain.wealthsimple_tool import WealthsimpleTool
+from wealthsimple_langchain.wealthsimple_toolkit import WealthsimpleToolkit
 
 __all__ = [
-    "TwitterApiWrapper",
-    "TwitterTool",
-    "TwitterToolkit",
+    "WealthsimpleApiWrapper",
+    "WealthsimpleTool",
+    "WealthsimpleToolkit",
 ]
