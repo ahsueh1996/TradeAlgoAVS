@@ -13,6 +13,7 @@ import random
 import threading
 import json
 import base64
+import requests
 
 def get_driver():
     # Set up Selenium WebDriver
@@ -70,22 +71,6 @@ class Client():
         self.login_status = "CREDS" # "BAD_CREDS", "OTP", "BAD_OTP", "OK"
         self.safe_webactivity_buttons = homepage_safe_buttons
 
-        # data = {
-        #     "AAPL": {
-        #         [
-        #             "price": 123.43,
-        #             "bid": 123.33,
-        #             "bid_size": 1000,
-        #             "ask": 124.12,
-        #             "ask_size": 1200,
-        #             "last": 123.43,
-        #             "last_size": 1000,
-        #             "time": 1234567890
-        #         ], ..
-        #     }, ..
-        # }
-        self.data = {}
-
         '''
         class MyStrategy(Strategy):
             
@@ -107,6 +92,11 @@ class Client():
                 net deposits vs net worth (max drawdown, max profit)
                 equity vs cash split (exposure to risk, utilization rate)
                 SMA ROI (avg roi over last 30days)
+
+                <the task triplet> strategy, user, market (def as sybmol, time period)
+                - read up the secret vault -- offline to learn
+                - validation of operators: assume a good strategy has reproducable returns, drawdowns, and exposure given the underlying market condition
+                                            overall the returns drawdowns and exposure are predictable(?)
 
 
             free to define everything else as it is convenient to the strategy
@@ -331,44 +321,6 @@ class Client():
         otp_input.send_keys(Keys.RETURN)
         print("submitted otp form")
 
-    # def login(self, email, password):
-    #     # check if the cookies file exists
-    #     # if not, login and save cookies
-    #     if not os.path.exists("cookies.pkl"):
-    #         print("No cookies found. May require 2FA...")
-    #         self._login(email, password)
-    #         # wait for user to enter 2FA
-    #         input("Press Enter after you have entered 2FA")
-    #         self.save_cookies()
-    #     else:
-    #         # Load cookies
-    #         print("Loading cookies...")
-    #         cookies = pickle.load(open("cookies.pkl", "rb"))
-    #         for cookie in cookies:
-    #             self.driver.add_cookie(cookie)
-    #         # reload the page
-    #         print("Reloading page...")
-    #         self.driver.refresh()
-    #         self._login(email, password)
-    #         self.save_cookies()
-
-    #     # wait until we get to the home page
-    #     while self.driver.current_url != self.url_home:
-    #         time.sleep(1)
-    #     print("Logged in successfully")
-    #     print("Getting token...")
-    #     self.scrape_bearer_token()
-    #     print("Network logs captured")
-
-
-
-    # def save_cookies(self):
-    #     # Save cookies
-    #     print("Saving cookies...")
-    #     self.cookies = self.driver.get_cookies()
-    #     # pickle.dump(self.cookies, open("cookies.pkl", "wb"))
-    #     print("Cookies saved")
-
     # ====================================================================================================
     # mimic web activity
     # ====================================================================================================
@@ -404,9 +356,97 @@ class Client():
         print(f"Next mimic_webactivity scheduled in {next_interval} seconds.")
         threading.Timer(next_interval, self.thread_keep_alive).start()
 
-    # ====================================================================================================
-    # Simulated Market
-    # ====================================================================================================
 
+    # ===================================================================================================================
+    # Low level WS API
+    # ===================================================================================================================
+    import curls.curl_modify as curl_modify
+    import curls.curl_cancel as curl_cancel
+    import curls.curl_create as curl_create
+    import curls.curl_fetch_activities as curl_fetch_activities
 
-    def poll_data(self, start=True):
+    bearer_token = ""
+    securityIDs = {}
+    securityCurrency = {} # if the currency of the security is not USD, store it here
+    default_url = 'https://my.wealthsimple.com/graphql'
+    def send_request(curl, variables_input=None, json_data=None):
+        global bearer_token
+        global default_url
+        # update the headers with the bearer token
+        headers = curl.headers
+        headers["authorization"] = bearer_token
+        # get the json data
+        if type(variables_input) is dict:
+            # update the variables with the variables
+            json_data = curl.json_data
+            for key in variables_input:
+                json_data['variables']['input'][key] = variables_input[key]
+        # the user can also pass in the json_data directly
+        # however, the variables_input will take precedence
+        if json_data is None:
+            json_data = curl.json_data
+        # send the request
+        url = default_url
+        if hasattr(curl, "url"):
+            url = curl.url
+        response = requests.post(url, headers=headers, json=json_data, cookies=curl.cookies)
+        if response.status_code == 401:
+            print("*********** Authorization failed, please reauthorize by asking see_module to update authorization token! **************")
+            print("Authorization: "+bearer_token)
+            print("headers: ")
+            print(json.dumps(headers, indent=4))
+            print("json_data: ")
+            print(json.dumps(json_data, indent=4))
+        elif response.status_code != 200:
+            print("*********** Request failed, error code: "+str(response.status_code)+" **************")
+            print("Response: "+json.dumps(response.json(), indent=4))
+        else:
+            response_json_str = json.dumps(response.json(), indent=4)
+            if '"errors": []' not in response_json_str and '"errors": null' not in response_json_str and '"errors":' in response_json_str:
+                """
+                Example 200 response with errors:
+                {
+                    "data": {
+                        "soOrdersCreateOrder": {
+                            "errors": [
+                                {
+                                    "code": "order.limit_price_outside_limit_threshold",
+                                    "message": "Limit buy failed passive validation: limit=0.1 lastPrice=9.5450 lowerLimit=0.190900",
+                                    "__typename": "SoOrders_ErrorResponse"
+                                }
+                            ],
+                            "order": None,
+                            "__typename": "SoOrders_CreateOrderTransformedResponse"
+                        }
+                    }
+                }
+                Example without errors:
+                {
+                    "data": {
+                        "soOrdersModifyOrder": {
+                            "errors": [],
+                            "__typename": "SoOrders_ModifyOrderTransformedResponse"
+                        }
+                    }
+                }
+                and
+                {
+                    "data": {
+                        "soOrdersCreateOrder": {
+                            "errors": null,
+                            "order": {
+                                "orderId": "order-00XceCr8DhE4",
+                                "createdAt": "2025-01-08T03:24:26.957Z",
+                                "__typename": "SoOrders_OrderTransformedResponse"
+                            },
+                            "__typename": "SoOrders_CreateOrderTransformedResponse"
+                        }
+                    }
+                }
+
+                """
+                print("*********** Request 200 but has WS error, status code: "+str(response.status_code)+" **************")
+                print("Response: "+json.dumps(response.json(), indent=4))
+                response.status_code = 200.5 # we will use this to indicate that the request was successful but had errors
+
+        return response
