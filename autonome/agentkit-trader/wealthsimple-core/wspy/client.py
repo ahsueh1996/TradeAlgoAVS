@@ -442,15 +442,15 @@ class Client():
     # ===================================================================================================================
     # High level WS API
     # ===================================================================================================================
-    import curls.curl_modify as curl_modify
-    import curls.curl_cancel as curl_cancel
-    import curls.curl_create as curl_create
-    import curls.curl_fetch_activities as curl_fetch_activities
-    import curls.curl_fetch_security as curl_security
-    import curls.curl_fetch_historical_quotes as curl_historical_quotes
-    import curls.curl_fetch_option_chain as curl_option_chain
-    import curls.curl_fetch_option_expiry as curl_option_expiry
-    import curls.curl_fetch_stock_news as curl_stock_news
+    import wspy.curl_modify as curl_modify
+    import wspy.curl_cancel as curl_cancel
+    import wspy.curl_create as curl_create
+    import wspy.curl_fetch_activities as curl_fetch_activities
+    import wspy.curl_fetch_security as curl_security
+    import wspy.curl_fetch_historical_quotes as curl_historical_quotes
+    import wspy.curl_fetch_option_chain as curl_option_chain
+    import wspy.curl_fetch_option_expiry as curl_option_expiry
+    import wspy.curl_fetch_stock_news as curl_stock_news
 
     def modify_order(self, order_id, new_price):
         response = self.send_request(curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
@@ -537,5 +537,6 @@ class Client():
             'shel': 'sec-s-146d4c88a1264c0c9088ef82691921d5',
             'es': 'sec-s-40ae0815aea641b0b448596ebd95f706',
             'wmt': 'sec-s-507c1d7a767b424b9319345fabfd4434',
-            'wyhg': 'sec-s-af94dc8442cd42b19b944c688cfcd803',
-        }
+            'wyhg': 'sec-s-af94dc8442cd42b19b944c688cfcd803'
+            }
+    

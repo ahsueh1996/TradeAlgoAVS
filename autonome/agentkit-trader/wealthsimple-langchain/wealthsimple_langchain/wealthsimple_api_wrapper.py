@@ -15,6 +15,7 @@ class WealthsimpleApiWrapper(BaseModel):
     client: Any | None = None
     ws_email: str
     ws_password: str
+    ws_account_id: str
 
     @model_validator(mode="before")
     @classmethod
@@ -28,6 +29,7 @@ class WealthsimpleApiWrapper(BaseModel):
         # actually we don't want to have these. The operator is generic therefore we will pull these secrets later when necessary.
         ws_email = get_from_dict_or_env(values, "ws_email", "WS_EMAIL")
         ws_password = get_from_dict_or_env(values, "ws_password", "WS_PASSWORD")
+        ws_account_id = get_from_dict_or_env(values, "ws_password", "WS_ACCOUNT_ID")
 
         try:
             import wspy
@@ -43,6 +45,7 @@ class WealthsimpleApiWrapper(BaseModel):
         values["client"] = client
         values["email"] = ws_email
         values["password"] = ws_password
+        values["account_id"] = ws_account_id
 
         return values
 
@@ -56,9 +59,12 @@ class WealthsimpleApiWrapper(BaseModel):
 
         # HACK
         if 'email' in kwargs and 'password' in kwargs:
-            print(f"[{str(func)}] Replacing login email and password with default .env secret!!")
+            print(f">>>>>>> [{str(func)}] Replacing login email and password with default .env secret!! <<<<<<<")
             kwargs['email'] = self.ws_email
             kwargs['password'] = self.ws_password
+        if 'ws_account_id' in kwargs:
+            print(f">>>>>>> [{str(func)}] Replacing ws_account_id with default .env secret!! <<<<<<<")
+            kwargs['email'] = self.ws_account_id
 
         if first_kwarg and first_kwarg.annotation is wspy.Client:
             return func(self.client, **kwargs)
