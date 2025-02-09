@@ -33,12 +33,15 @@ def get_driver():
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     # Download here https://googlechromelabs.github.io/chrome-for-testing/
     if sys.platform == "darwin":
-        service = Service(executable_path=os.path.join(os.path.dirname(__file__), "chromedriver-mac-arm64/chromedriver"))  # Update path to chromedriver
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-mac-arm64/chromedriver")
     elif "win" in sys.platform and sys.platform != "darwin":
-        service = Service(executable_path=os.path.join(os.path.dirname(__file__), "chromedriver-win64/chromedriver.exe"))
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-win64/chromedriver.exe")
     elif "linux" in sys.platform:
-        service = Service(executable_path=os.path.join(os.path.dirname(__file__), "chromedriver-linux64/chromedriver.exe"))
-
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-linux64/chromedriver")
+    print(f"Platform: {sys.platform}")
+    print(f"Using chromedriver at: {path}")
+    print(f"Checking if chromedriver exists: {os.path.exists(path)}")
+    service = Service(executable_path=path)  # Update path to chromedriver
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
@@ -74,7 +77,13 @@ class Client():
                  url_home = "https://my.wealthsimple.com/app/home"):
         self.url_login = url_login
         self.url_home = url_home
-        self.driver = get_driver()
+        try:
+            self.driver = get_driver()
+        except Exception as e:
+            print(f"Error: {e}")
+            print("====================="*4)
+            print("Continuing without driver....")
+            self.driver = None
         self.windows = {}
         self.bearer_token = ""
         self.cookies = None
