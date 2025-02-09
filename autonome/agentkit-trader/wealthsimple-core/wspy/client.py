@@ -14,6 +14,16 @@ import threading
 import json
 import base64
 import requests
+import wspy.curl_modify as curl_modify
+import wspy.curl_cancel as curl_cancel
+import wspy.curl_create as curl_create
+import wspy.curl_fetch_activities as curl_fetch_activities
+import wspy.curl_fetch_security as curl_fetch_security
+import wspy.curl_fetch_historical_quotes as curl_historical_quotes
+import wspy.curl_fetch_option_chain as curl_option_chain
+import wspy.curl_fetch_option_expiry as curl_option_expiry
+import wspy.curl_fetch_stock_news as curl_stock_news
+
 
 def get_driver():
     # Set up Selenium WebDriver
@@ -23,12 +33,15 @@ def get_driver():
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     # Download here https://googlechromelabs.github.io/chrome-for-testing/
     if sys.platform == "darwin":
-        service = Service(executable_path=os.path.join(os.path.dirname(__file__), "chromedriver-mac-arm64/chromedriver"))  # Update path to chromedriver
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-mac-arm64/chromedriver")
     elif "win" in sys.platform and sys.platform != "darwin":
-        service = Service(executable_path=os.path.join(os.path.dirname(__file__), "chromedriver-win64/chromedriver.exe"))
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-win64/chromedriver.exe")
     elif "linux" in sys.platform:
-        service = Service(executable_path=os.path.join(os.path.dirname(__file__), "chromedriver-linux64/chromedriver.exe"))
-
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-linux64/chromedriver")
+    print(f"Platform: {sys.platform}")
+    print(f"Using chromedriver at: {path}")
+    print(f"Checking if chromedriver exists: {os.path.exists(path)}")
+    service = Service(executable_path=path)  # Update path to chromedriver
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
@@ -64,7 +77,13 @@ class Client():
                  url_home = "https://my.wealthsimple.com/app/home"):
         self.url_login = url_login
         self.url_home = url_home
-        self.driver = get_driver()
+        try:
+            self.driver = get_driver()
+        except Exception as e:
+            print(f"Error: {e}")
+            print("====================="*4)
+            print("Continuing without driver....")
+            self.driver = None
         self.windows = {}
         self.bearer_token = ""
         self.cookies = None
@@ -360,7 +379,6 @@ class Client():
     # ===================================================================================================================
     # Low level WS API
     # ===================================================================================================================
-    import curls.curl_modify as curl_modify
 
     def send_request(self, curl, variables_input=None, json_data=None):
         default_url = 'https://my.wealthsimple.com/graphql'
@@ -445,14 +463,137 @@ class Client():
     # ===================================================================================================================
 
     def modify_order(self, order_id, new_price):
+        print("[WSClient] modify order...")
         response = self.send_request(curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
         return response
     
     def create_order(self, symbol, quantity, price, side):
+        print("[WSClient] create order...")
         raise NotImplementedError
     
     def cancel_order(self, order_id):
+        print("[WSClient] cancel order...")
         reponse = self.send_request(curl_cancel, variables_input={"externalId": order_id})
 
-    def get_activity(self):
+    def _parse_response(self, response):
+        try:
+            response = response.json()
+        except Exception:
+            print(f"No json(), response status: {response.status_code}")
+            response = {"error": response.status_code}
+        print(json.dumps(response,indent=4)[:500])
+        return response
+
+    def fetch_activities(self, account_id):
+        print("[WSClient] fetching activities...")
+        tempJD = curl_fetch_activities.create_default_fetch_activities([account_id])
+        response = self.send_request(curl_fetch_activities, json_data=tempJD)
+        response = self._parse_response(response)
+        return response
+
+    def fetch_security(self, security_id):
+        print("[WSClient] fetching security details...")
+        tempJD = curl_fetch_security.create_request_json(security_id)
+        response = self.send_request(curl_fetch_security, json_data=tempJD)
+        response = self._parse_response(response)
+        return response
+    
+    def fetch_news(self, security_id):
+        print("[WSClient] fetching news...")
+        tempJD = curl_stock_news.create_request_json(security_id)
+        response = self.send_request(curl_stock_news, json_data=tempJD)
+        response = self._parse_response(response)
+        return response
+    
+    def fetch_historical_quotes(self, security_id, time_period="1y"):
+        print("[WSClient] fetching historical...")
+        if time_period not in ['1d','1w','1m','3m','1y','5y']:
+            time_period = "1y"
+        tempJD = curl_historical_quotes.create_request_json(time_period, security_id)
+        response = self.send_request(curl_historical_quotes, json_data=tempJD)
+        response = self._parse_response(response)
+        return response
+    
+    def fetch_option_chain(self, security_id, expiry_date, option_type='CALL'):
+        print("[WSClient] fetching opt chain...")
+        if option_type not in ['CALL', 'PUT']:
+            option_type = 'CALL'
+        tempJD = curl_option_chain.create_request_json(security_id, expiry_date, option_type)
+        response = self.send_request(curl_option_chain, json_data=tempJD)
+        response = self._parse_response(response)
+        return response
+
+    def fetch_option_expiry(self, security_id):
+        print("[WSClient] fetching opt expiry...")
+        tempJD = curl_option_expiry.create_request_json(security_id)
+        response = self.send_request(curl_option_expiry, json_data=tempJD)
+        response = self._parse_response(response)
+        return response
+    
+    
+    # ===================================================================================================================
+    # Others
+    # ===================================================================================================================
+
+    def get_security_ids(self):
+        # this is a known list of security ids.
+        print("[WSClient] Getting security ids...")
+        return {
+            'appl': 'sec-s-76a7155242e8477880cbb43269235cb6',
+            'btc': 'sec-z-btc-4ca670cac10139ce8678b84836231606',
+            'btcc.b': 'sec-s-7c6d01202afc4fa1a8084c55dfd08c32',
+            'cs': 'sec-s-b1bd5016b7dc4db5b473271d63021444', 
+            'doge': 'sec-z-doge-23311fdfc8a9f12143a80648a695dff9', 
+            'eth': 'sec-z-eth-dc40261c82a191b11e53426aa25d91af', 
+            'hbar': 'sec-z-hbar-4b78cdfb4bd6e597356eb17ac9de0470', 
+            'inod': 'sec-s-68f7934778ad42b389f8e78a8a4f6c65', 
+            'ionq': 'sec-s-3d91e20fafb4478b82065e7678866738', 
+            'kld': 'sec-s-c9c04b850d0d49499270d44a0cc61790', 
+            'lug': 'sec-s-07371d86105849649c573a2aac720ee6', 
+            'mhh': 'sec-s-5d227d9833554f889ef33cd2aeb7a713', 
+            'mnst': 'sec-s-707809ecacbe4b939d2b460efc151108', 
+            'omer': 'sec-s-9d62d9c52b5349bb9923cd0920049d1c', 
+            'pnsl': 'sec-s-846c6acf01a6453ca0159615c7c3b606',
+            'pton': 'sec-s-9ffd742f8ccf4575ac3a4193501777c2', 
+            'qbts': 'sec-s-4f0ef440bcaf4f70a92fdd4ccfee9b3f', 
+            'qcom': 'sec-s-7a88ca5b1b7f4b6cb19d864d2857e012', 
+            'qubt': 'sec-s-fb3d2a9668ac47fe89c628644c79a4c7', 
+            'rcat': 'sec-s-85898db1b8d44478879fe4350b22090b', 
+            'rgti': 'sec-s-206925b96eae4e288e8554f0aa88053e', 
+            'sidu': 'sec-s-5f5ad53a98f44d0095b18f452f66c911', 
+            'smci': 'sec-s-7ce0571d20954e29b1394604be996a23', 
+            'sol': 'sec-z-sol-e5a9b2e9b19b4266be50dc26cd309ed6', 
+            'teva': 'sec-s-9d00caf0d86c4aefb2b76061c44126ab',
+            'spy': 'sec-s-27167ecbd81140fe9cdc02535f43174d',
+            'tsla': 'sec-s-50cdacc9811f407c8dff52e15be08582',
+            'nvda': 'sec-s-220e8c65080c441aa87da8089460fae4',
+            'msft': 'sec-s-2b07d13e1dee4f418afe10d3ffeb5b9c',
+            'cvna': 'sec-s-5dfdae497ebe4b7983a4c9ab96c128d1',
+            'shel': 'sec-s-146d4c88a1264c0c9088ef82691921d5',
+            'es': 'sec-s-40ae0815aea641b0b448596ebd95f706',
+            'wmt': 'sec-s-507c1d7a767b424b9319345fabfd4434',
+            'wyhg': 'sec-s-af94dc8442cd42b19b944c688cfcd803'
+            }
+    
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+class Strategy():
+    def run():
         raise NotImplementedError
+    
+    def report():
+        raise NotImplementedError
+    
+
+class AgenticStrategy(Strategy):
+    pass
