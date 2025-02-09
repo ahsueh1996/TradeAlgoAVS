@@ -14,6 +14,16 @@ import threading
 import json
 import base64
 import requests
+import wspy.curl_modify as curl_modify
+import wspy.curl_cancel as curl_cancel
+import wspy.curl_create as curl_create
+import wspy.curl_fetch_activities as curl_fetch_activities
+import wspy.curl_fetch_security as curl_fetch_security
+import wspy.curl_fetch_historical_quotes as curl_historical_quotes
+import wspy.curl_fetch_option_chain as curl_option_chain
+import wspy.curl_fetch_option_expiry as curl_option_expiry
+import wspy.curl_fetch_stock_news as curl_stock_news
+
 
 def get_driver():
     # Set up Selenium WebDriver
@@ -442,15 +452,6 @@ class Client():
     # ===================================================================================================================
     # High level WS API
     # ===================================================================================================================
-    import wspy.curl_modify as curl_modify
-    import wspy.curl_cancel as curl_cancel
-    import wspy.curl_create as curl_create
-    import wspy.curl_fetch_activities as curl_fetch_activities
-    import wspy.curl_fetch_security as curl_security
-    import wspy.curl_fetch_historical_quotes as curl_historical_quotes
-    import wspy.curl_fetch_option_chain as curl_option_chain
-    import wspy.curl_fetch_option_expiry as curl_option_expiry
-    import wspy.curl_fetch_stock_news as curl_stock_news
 
     def modify_order(self, order_id, new_price):
         response = self.send_request(curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
