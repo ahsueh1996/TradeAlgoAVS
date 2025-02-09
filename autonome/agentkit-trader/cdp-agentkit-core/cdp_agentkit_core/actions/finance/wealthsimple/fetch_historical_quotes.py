@@ -8,14 +8,10 @@ from cdp_agentkit_core.actions.finance.wealthsimple.action import WealthsimpleAc
 
 FETCH_HISTORICAL_PROMPT = """
 This tool will help the fetch the raw historical quotes for a given security. It works with any security type, including stocks, options, and crypto.
-
-Success: The returned data will be in the form of a JSON object.
-Failure: The returned data will be in the form of a JSON object with an error message.
-
 You are able to use the details together with other details to create a custom report or to analyze the data.
-Suggested useage. Resolve the security id by looking at what the user wants to know about. 
-Then use this tool to fetch the price movement. It is generally the case that users will want to know the price movement for a security over a specific time period and know something qualitative about the security.
-For instance, they will want to konw if the security has been trending up or down, or if it has been volatile or stable, or if the stock is currently undervalued or overvalued.
+Resolve the security id by looking at what the user wants to know about then use this tool to fetch the price movement.
+Users will want to know the price movement for a security over a specific time period and know something qualitative about the security.
+For instance, they will want to know if the security has been trending up or down, or if it has been volatile or stable, or if the stock is currently undervalued or overvalued.
 Another use case is to compare the price movement of a security with another security to see which one has been performing better.
 Another use case is to use this tool to fetch the underlying price movement of a security and use it with the option chain data to estimate the potential returns of an option.
 """
@@ -34,13 +30,13 @@ class FetchHistoricalInput(BaseModel):
 
 
 
-def fetch_historical_quotes(client: wspy.Client, security_id) -> str:
+def fetch_historical_quotes(client: wspy.Client, security_id, timerange) -> str:
     """
     Logs into the specified account
 
     Returns the current login status
     """
-    return client.fetch_historical_quotes(security_id)
+    return client.fetch_historical_quotes(security_id, timerange)
 
 
 class FetchHistoricalAction(WealthsimpleAction):

@@ -24,7 +24,8 @@ load_dotenv()
 def initialize_agent():
     """Initialize the agent with CDP Agentkit."""
     # Initialize LLM.
-    llm = ChatOpenAI(model="gpt-4o-mini")
+    llm = ChatOpenAI(model="gpt-3.5-turbo-1106")
+    # llm = ChatOpenAI(model="gpt-4o-mini")
 
     # ===========================================================================================
     #                                       CDP Agentkit Tools
@@ -59,7 +60,8 @@ def initialize_agent():
     values = {}
     values = {
         "ws_email": os.environ.get("WS_EMAIL"),
-        "ws_password": os.environ.get("WS_PASSWORD")
+        "ws_password": os.environ.get("WS_PASSWORD"),
+        "ws_account_id": os.environ.get("WS_ACCOUNT_ID")
         }
     ws_wrapper = WealthsimpleApiWrapper(**values)
     ws_toolkit = WealthsimpleToolkit.from_wealthsimple_api_wrapper(ws_wrapper)

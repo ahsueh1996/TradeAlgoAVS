@@ -29,7 +29,7 @@ class WealthsimpleApiWrapper(BaseModel):
         # actually we don't want to have these. The operator is generic therefore we will pull these secrets later when necessary.
         ws_email = get_from_dict_or_env(values, "ws_email", "WS_EMAIL")
         ws_password = get_from_dict_or_env(values, "ws_password", "WS_PASSWORD")
-        ws_account_id = get_from_dict_or_env(values, "ws_password", "WS_ACCOUNT_ID")
+        ws_account_id = get_from_dict_or_env(values, "ws_account_id", "WS_ACCOUNT_ID")
 
         try:
             import wspy
