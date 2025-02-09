@@ -469,31 +469,31 @@ class Client():
         return response
 
     def fetch_security(self, security_id):
-        tempJD = curl_fetch_security.create_default_fetch_security(security_id)
+        tempJD = curl_fetch_security.create_request_json(security_id)
         response = self.send_request(curl_fetch_security, json_data=tempJD)
         return response
     
     def fetch_news(self, security_id):
-        tempJD = curl_stock_news.create_json_request(security_id)
+        tempJD = curl_stock_news.create_request_json(security_id)
         response = self.send_request(curl_stock_news, json_data=tempJD)
         return response
     
     def fetch_historical_quotes(self, security_id, time_period="1y"):
         if time_period not in ['1d','1w','1m','3m','1y','5y']:
             time_period = "1y"
-        tempJD = curl_historical_quotes.create_json_request(time_period, security_id)
+        tempJD = curl_historical_quotes.create_request_json(time_period, security_id)
         response = self.send_request(curl_historical_quotes, json_data=tempJD)
         return response
     
     def fetch_option_chain(self, security_id, expiry_date, option_type='CALL'):
         if option_type not in ['CALL', 'PUT']:
             option_type = 'CALL'
-        tempJD = curl_option_chain.create_json_request(security_id, expiry_date, option_type)
+        tempJD = curl_option_chain.create_request_json(security_id, expiry_date, option_type)
         response = self.send_request(curl_option_chain, json_data=tempJD)
         return response
 
     def fetch_option_expiry(self, security_id):
-        tempJD = curl_option_expiry.create_json_request(security_id)
+        tempJD = curl_option_expiry.create_request_json(security_id)
         response = self.send_request(curl_option_expiry, json_data=tempJD)
         return response
     
