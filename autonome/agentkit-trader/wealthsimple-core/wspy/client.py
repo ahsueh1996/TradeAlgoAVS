@@ -360,7 +360,6 @@ class Client():
     # ===================================================================================================================
     # Low level WS API
     # ===================================================================================================================
-    import curls.curl_modify as curl_modify
 
     def send_request(self, curl, variables_input=None, json_data=None):
         default_url = 'https://my.wealthsimple.com/graphql'
@@ -443,6 +442,15 @@ class Client():
     # ===================================================================================================================
     # High level WS API
     # ===================================================================================================================
+    import curls.curl_modify as curl_modify
+    import curls.curl_cancel as curl_cancel
+    import curls.curl_create as curl_create
+    import curls.curl_fetch_activities as curl_fetch_activities
+    import curls.curl_fetch_security as curl_security
+    import curls.curl_fetch_historical_quotes as curl_historical_quotes
+    import curls.curl_fetch_option_chain as curl_option_chain
+    import curls.curl_fetch_option_expiry as curl_option_expiry
+    import curls.curl_fetch_stock_news as curl_stock_news
 
     def modify_order(self, order_id, new_price):
         response = self.send_request(curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
@@ -454,5 +462,80 @@ class Client():
     def cancel_order(self, order_id):
         reponse = self.send_request(curl_cancel, variables_input={"externalId": order_id})
 
-    def get_activity(self):
-        raise NotImplementedError
+    def fetch_activities(self, account_id):
+        tempJD = curl_fetch_activities.create_default_fetch_activities([account_id])
+        response = self.send_request(curl_fetch_activities, json_data=tempJD)
+        return response
+
+    def fetch_security(self, security_id):
+        tempJD = curl_fetch_security.create_default_fetch_security(security_id)
+        response = self.send_request(curl_fetch_security, json_data=tempJD)
+        return response
+    
+    def fetch_news(self, security_id):
+        tempJD = curl_stock_news.create_json_request(security_id)
+        response = self.send_request(curl_stock_news, json_data=tempJD)
+        return response
+    
+    def fetch_historical_quotes(self, security_id, time_period="1y"):
+        if time_period not in ['1d','1w','1m','3m','1y','5y']:
+            time_period = "1y"
+        tempJD = curl_historical_quotes.create_json_request(time_period, security_id)
+        response = self.send_request(curl_historical_quotes, json_data=tempJD)
+        return response
+    
+    def fetch_option_chain(self, security_id, expiry_date, option_type='CALL'):
+        if option_type not in ['CALL', 'PUT']:
+            option_type = 'CALL'
+        tempJD = curl_option_chain.create_json_request(security_id, expiry_date, option_type)
+        response = self.send_request(curl_option_chain, json_data=tempJD)
+        return response
+
+    def fetch_option_expiry(self, security_id):
+        tempJD = curl_option_expiry.create_json_request(security_id)
+        response = self.send_request(curl_option_expiry, json_data=tempJD)
+        return response
+    
+    
+    # ===================================================================================================================
+    # Others
+    # ===================================================================================================================
+
+    def get_securiy_ids(self):
+        # this is a known list of security ids.
+        return {
+            'appl': 'sec-s-76a7155242e8477880cbb43269235cb6',
+            'btc': 'sec-z-btc-4ca670cac10139ce8678b84836231606',
+            'btcc.b': 'sec-s-7c6d01202afc4fa1a8084c55dfd08c32',
+            'cs': 'sec-s-b1bd5016b7dc4db5b473271d63021444', 
+            'doge': 'sec-z-doge-23311fdfc8a9f12143a80648a695dff9', 
+            'eth': 'sec-z-eth-dc40261c82a191b11e53426aa25d91af', 
+            'hbar': 'sec-z-hbar-4b78cdfb4bd6e597356eb17ac9de0470', 
+            'inod': 'sec-s-68f7934778ad42b389f8e78a8a4f6c65', 
+            'ionq': 'sec-s-3d91e20fafb4478b82065e7678866738', 
+            'kld': 'sec-s-c9c04b850d0d49499270d44a0cc61790', 
+            'lug': 'sec-s-07371d86105849649c573a2aac720ee6', 
+            'mhh': 'sec-s-5d227d9833554f889ef33cd2aeb7a713', 
+            'mnst': 'sec-s-707809ecacbe4b939d2b460efc151108', 
+            'omer': 'sec-s-9d62d9c52b5349bb9923cd0920049d1c', 
+            'pnsl': 'sec-s-846c6acf01a6453ca0159615c7c3b606',
+            'pton': 'sec-s-9ffd742f8ccf4575ac3a4193501777c2', 
+            'qbts': 'sec-s-4f0ef440bcaf4f70a92fdd4ccfee9b3f', 
+            'qcom': 'sec-s-7a88ca5b1b7f4b6cb19d864d2857e012', 
+            'qubt': 'sec-s-fb3d2a9668ac47fe89c628644c79a4c7', 
+            'rcat': 'sec-s-85898db1b8d44478879fe4350b22090b', 
+            'rgti': 'sec-s-206925b96eae4e288e8554f0aa88053e', 
+            'sidu': 'sec-s-5f5ad53a98f44d0095b18f452f66c911', 
+            'smci': 'sec-s-7ce0571d20954e29b1394604be996a23', 
+            'sol': 'sec-z-sol-e5a9b2e9b19b4266be50dc26cd309ed6', 
+            'teva': 'sec-s-9d00caf0d86c4aefb2b76061c44126ab',
+            'spy': 'sec-s-27167ecbd81140fe9cdc02535f43174d',
+            'tsla': 'sec-s-50cdacc9811f407c8dff52e15be08582',
+            'nvda': 'sec-s-220e8c65080c441aa87da8089460fae4',
+            'msft': 'sec-s-2b07d13e1dee4f418afe10d3ffeb5b9c',
+            'cvna': 'sec-s-5dfdae497ebe4b7983a4c9ab96c128d1',
+            'shel': 'sec-s-146d4c88a1264c0c9088ef82691921d5',
+            'es': 'sec-s-40ae0815aea641b0b448596ebd95f706',
+            'wmt': 'sec-s-507c1d7a767b424b9319345fabfd4434',
+            'wyhg': 'sec-s-af94dc8442cd42b19b944c688cfcd803',
+        }

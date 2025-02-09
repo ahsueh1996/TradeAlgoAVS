@@ -161,10 +161,19 @@ response = requests.post('https://my.wealthsimple.com/graphql', cookies=cookies,
 #data = '{"operationName":"FetchActivityFeedItems","variables":{"orderBy":"OCCURRED_AT_DESC","condition":{"accountIds":["non-registered-qg0kaqvs","non-registered-OIzSXMKX6w","tfsa-efxbb3dd","tfsa-V1SACdWcJA","ca-cash-msb-tTRdeOlyiQ","non-registered-4Abwfg0v8g","non-registered-CVT-UTQOag","tfsa-ZGIkkYSEHw","non-registered-crypto-HCgcCoASuA"],"types":["DIVIDEND","STOCK_DIVIDEND","MANAGED_BUY","CRYPTO_BUY","DIY_BUY","OPTIONS_BUY","MANAGED_SELL","CRYPTO_SELL","DIY_SELL","OPTIONS_SELL","WITHHOLDING_TAX","NON_RESIDENT_TAX","AFFILIATE","PROMOTION","REFERRAL","DEPOSIT","GROUP_CONTRIBUTION","INTEREST","FEE","FUNDS_CONVERSION","RESP_GRANT","OPTIONS_EXPIRY","OPTIONS_EXERCISE","P2P_PAYMENT","REFUND","REIMBURSEMENT","CRYPTO_STAKING_REWARD","CRYPTO_STAKING_ACTION","SPEND","PREPAID_SPEND","CREDIT_CARD","INTERNAL_TRANSFER","INSTITUTIONAL_TRANSFER_INTENT","LEGACY_INTERNAL_TRANSFER","LEGACY_TRANSFER","CRYPTO_TRANSFER","WRITE_OFF","WITHDRAWAL"],"subTypes":["PREPAID","PURCHASE","REFUND","CASH_ADVANCE"],"securityIds":["sec-s-bb0c7dd14c66459c90c01e99a106dbfe","sec-s-27167ecbd81140fe9cdc02535f43174d"],"unifiedStatuses":["ACTION_REQUIRED","CANCELLED","CANCEL_PENDING","COMPLETED","DECLINED","EXPIRED","FAILED","IN_PROGRESS","PENDING","REFUNDED","REJECTED","REVERSED","TRANSFERRING"],"endDate":"2025-01-04T04:59:59.999Z"},"first":50},"query":"query FetchActivityFeedItems($first: Int, $cursor: Cursor, $condition: ActivityCondition, $orderBy: [ActivitiesOrderBy!] = OCCURRED_AT_DESC) {\\n  activityFeedItems(\\n    first: $first\\n    after: $cursor\\n    condition: $condition\\n    orderBy: $orderBy\\n  ) {\\n    edges {\\n      node {\\n        ...Activity\\n        __typename\\n      }\\n      __typename\\n    }\\n    pageInfo {\\n      hasNextPage\\n      endCursor\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\\nfragment Activity on ActivityFeedItem {\\n  accountId\\n  aftOriginatorName\\n  aftTransactionCategory\\n  aftTransactionType\\n  amount\\n  amountSign\\n  assetQuantity\\n  assetSymbol\\n  canonicalId\\n  currency\\n  eTransferEmail\\n  eTransferName\\n  externalCanonicalId\\n  identityId\\n  institutionName\\n  occurredAt\\n  p2pHandle\\n  p2pMessage\\n  spendMerchant\\n  securityId\\n  billPayCompanyName\\n  billPayPayeeNickname\\n  redactedExternalAccountNumber\\n  opposingAccountId\\n  status\\n  subType\\n  type\\n  strikePrice\\n  contractType\\n  expiryDate\\n  chequeNumber\\n  provisionalCreditAmount\\n  primaryBlocker\\n  interestRate\\n  frequency\\n  counterAssetSymbol\\n  rewardProgram\\n  counterPartyCurrency\\n  counterPartyCurrencyAmount\\n  counterPartyName\\n  fxRate\\n  fees\\n  reference\\n  __typename\\n}"}'
 #response = requests.post('https://my.wealthsimple.com/graphql', cookies=cookies, headers=headers, data=data)
 
-# =================================================================================================
-# =================================================================================================
-# =================================================================================================
-TODO = 'TODO'
+
+import copy
+from datetime import datetime
+
+def create_default_fetch_activities(accountIds):
+    jd = copy.deepcopy(json_data)
+    jd['variables']['condition']['accountIds'] = accountIds  # pass all the accounts you want to fetch here
+    jd['variables']['condition'].pop('subTypes', None)
+    jd['variables']['condition']['endDate'] = datetime.utcnow().isoformat()+"Z"
+    jd['variables']['condition'].pop('securityIds', None) # all securities
+    jd['variables']['condition']['first'] = 500
+    jd['variables']['condition']['unifiedStatuses'] = ['COMPLETED']
+    return jd
 
 '''
 Sample response.json()
