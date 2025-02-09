@@ -4,7 +4,7 @@
 
 ## Overview
 <p align="center">
-  <a href="https://www.agentic2025.com" target="_blank">
+  <a href="https://ethglobal.com/events/agents" target="_blank">
     <img src="partners/agentic2025.png" alt="Agentic 2025" width="150"/>
   </a>
 </p>
@@ -80,16 +80,16 @@ See [AVS README.md](https://github.com/ehsueh/trade-algo-avs) for details on the
 Huge thank-you's to the following organizations!
 
 <p align="center">
-  <a href="https://www.alchemy.com" target="_blank">
+  <a href="https://www.alchemy.com/" target="_blank">
     <img src="partners/alchemy.png" alt="Alchemy" width="150"/>
   </a>
-  <a href="https://www.autonome.io" target="_blank">
+  <a href="https://dev.autonome.fun/autonome" target="_blank">
     <img src="partners/autonome.png" alt="Autonome" width="150"/>
   </a>
-  <a href="https://www.cdp.com" target="_blank">
+  <a href="https://docs.cdp.coinbase.com/cdp-apis/docs/welcome" target="_blank">
     <img src="partners/cdp.png" alt="CDP" width="150"/>
   </a>
-  <a href="https://www.eigenlayer.xyz" target="_blank">
+  <a href="https://docs.eigenlayer.xyz/" target="_blank">
     <img src="partners/eigenlayer.png" alt="EigenLayer" width="150"/>
   </a>
   <a href="https://ethglobal.com" target="_blank">
@@ -98,7 +98,7 @@ Huge thank-you's to the following organizations!
   <a href="https://cloud.google.com" target="_blank">
     <img src="partners/gcp.png" alt="Google Cloud Platform" width="150"/>
   </a>
-  <a href="https://www.nillion.com" target="_blank">
+  <a href="https://docs.nillion.com/" target="_blank">
     <img src="partners/nillion.png" alt="Nillion" width="150"/>
   </a>
 </p>
