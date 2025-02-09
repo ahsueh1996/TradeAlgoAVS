@@ -116,6 +116,7 @@ response = requests.post('https://my.wealthsimple.com/graphql', cookies=cookies,
 
 import copy
 def create_request_json(security_id, expiry_date, option_type):
+    global json_data
     json_data = copy.deepcopy(json_data)
     json_data['variables']['id'] = security_id
     json_data['variables']['expiryDate'] = expiry_date

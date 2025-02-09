@@ -113,6 +113,7 @@ response = requests.post('https://my.wealthsimple.com/graphql', cookies=cookies,
 
 import copy
 def create_request_json(security_id):
+    global json_data
     json_data = copy.deepcopy(json_data)
     json_data['variables']['securityId'] = security_id
     return json_data

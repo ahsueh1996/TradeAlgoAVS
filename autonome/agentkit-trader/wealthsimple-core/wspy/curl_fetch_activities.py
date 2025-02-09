@@ -166,6 +166,7 @@ import copy
 from datetime import datetime
 
 def create_default_fetch_activities(accountIds):
+    global json_data
     jd = copy.deepcopy(json_data)
     jd['variables']['condition']['accountIds'] = accountIds  # pass all the accounts you want to fetch here
     jd['variables']['condition'].pop('subTypes', None)

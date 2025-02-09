@@ -121,6 +121,7 @@ response = requests.post('https://my.wealthsimple.com/graphql', cookies=cookies,
 
 import copy
 def create_request_json(timerange: str, security_id: str):
+    global json_data
     tempJD = copy.deepcopy(json_data)
     tempJD['variables']['timerange'] = timerange
     tempJD['variables']['id'] = security_id

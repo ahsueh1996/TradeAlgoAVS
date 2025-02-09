@@ -454,47 +454,71 @@ class Client():
     # ===================================================================================================================
 
     def modify_order(self, order_id, new_price):
+        print("[WSClient] modify order...")
         response = self.send_request(curl_modify, variables_input={"externalId": order_id, "newLimitPrice": new_price})
         return response
     
     def create_order(self, symbol, quantity, price, side):
+        print("[WSClient] create order...")
         raise NotImplementedError
     
     def cancel_order(self, order_id):
+        print("[WSClient] cancel order...")
         reponse = self.send_request(curl_cancel, variables_input={"externalId": order_id})
 
+    def _parse_response(self, response):
+        try:
+            response = response.json()
+        except Exception:
+            print(f"No json(), response status: {response.status_code}")
+            response = {"error": response.status_code}
+        print(json.dumps(response,indent=4)[:500])
+        return response
+
     def fetch_activities(self, account_id):
+        print("[WSClient] fetching activities...")
         tempJD = curl_fetch_activities.create_default_fetch_activities([account_id])
         response = self.send_request(curl_fetch_activities, json_data=tempJD)
+        response = self._parse_response(response)
         return response
 
     def fetch_security(self, security_id):
+        print("[WSClient] fetching security details...")
         tempJD = curl_fetch_security.create_request_json(security_id)
         response = self.send_request(curl_fetch_security, json_data=tempJD)
+        response = self._parse_response(response)
         return response
     
     def fetch_news(self, security_id):
+        print("[WSClient] fetching news...")
         tempJD = curl_stock_news.create_request_json(security_id)
         response = self.send_request(curl_stock_news, json_data=tempJD)
+        response = self._parse_response(response)
         return response
     
     def fetch_historical_quotes(self, security_id, time_period="1y"):
+        print("[WSClient] fetching historical...")
         if time_period not in ['1d','1w','1m','3m','1y','5y']:
             time_period = "1y"
         tempJD = curl_historical_quotes.create_request_json(time_period, security_id)
         response = self.send_request(curl_historical_quotes, json_data=tempJD)
+        response = self._parse_response(response)
         return response
     
     def fetch_option_chain(self, security_id, expiry_date, option_type='CALL'):
+        print("[WSClient] fetching opt chain...")
         if option_type not in ['CALL', 'PUT']:
             option_type = 'CALL'
         tempJD = curl_option_chain.create_request_json(security_id, expiry_date, option_type)
         response = self.send_request(curl_option_chain, json_data=tempJD)
+        response = self._parse_response(response)
         return response
 
     def fetch_option_expiry(self, security_id):
+        print("[WSClient] fetching opt expiry...")
         tempJD = curl_option_expiry.create_request_json(security_id)
         response = self.send_request(curl_option_expiry, json_data=tempJD)
+        response = self._parse_response(response)
         return response
     
     
@@ -502,8 +526,9 @@ class Client():
     # Others
     # ===================================================================================================================
 
-    def get_securiy_ids(self):
+    def get_security_ids(self):
         # this is a known list of security ids.
+        print("[WSClient] Getting security ids...")
         return {
             'appl': 'sec-s-76a7155242e8477880cbb43269235cb6',
             'btc': 'sec-z-btc-4ca670cac10139ce8678b84836231606',

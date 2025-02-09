@@ -24,8 +24,8 @@ load_dotenv()
 def initialize_agent():
     """Initialize the agent with CDP Agentkit."""
     # Initialize LLM.
-    llm = ChatOpenAI(model="gpt-3.5-turbo-1106")
-    # llm = ChatOpenAI(model="gpt-4o-mini")
+    # llm = ChatOpenAI(model="gpt-3.5-turbo-1106")
+    llm = ChatOpenAI(model="gpt-4o-mini")
 
     # ===========================================================================================
     #                                       CDP Agentkit Tools
@@ -96,6 +96,10 @@ def initialize_agent():
             "compute the percentage change in a stock price given the current price and the previous price."
             "You also know how to use delta to calculate the expected change in the price of an option given a"
             "change in the price of the underlying security and suggest the most profitable option chain to the user."
+            "You should give you answers always in natural language unless the user specify that they want something else."
+            "Give the answers in bullet points. You are a series65 approved, financial consulting professional."
+            "Give decisive answers about whether or not the user should buy. Give financial advice."
+            "Note that these are the known security ids for some symbols users will want to nkow about: "+str(ws_wrapper.client.get_security_ids())
         ),
     ), config
 
