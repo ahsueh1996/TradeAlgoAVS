@@ -25,11 +25,15 @@ import wspy.curl_fetch_option_expiry as curl_option_expiry
 import wspy.curl_fetch_stock_news as curl_stock_news
 
 
+
 def get_driver():
     # Set up Selenium WebDriver
     options = Options()
     options.add_argument("--start-maximized")  # Optional: Start browser maximized
-    # options.add_argument("--headless")  # Optional: Run in headless mode
+    # options.add_argument('--headless')
+    # options.add_argument('--disable-gpu')
+    # options.add_argument('--no-sandbox')
+    # options.add_argument('--disable-dev-shm-usage')
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     # Download here https://googlechromelabs.github.io/chrome-for-testing/
     if sys.platform == "darwin":
@@ -43,6 +47,46 @@ def get_driver():
     print(f"Checking if chromedriver exists: {os.path.exists(path)}")
     service = Service(executable_path=path)  # Update path to chromedriver
     driver = webdriver.Chrome(service=service, options=options)
+    return driver
+
+def get_driver_docker():
+    # Set up Selenium WebDriver
+    options = Options()
+    options.add_argument("start-maximized")
+    options.add_argument("--no-sandbox")  # Required in Docker
+    options.add_argument("--disable-dev-shm-usage")  # Prevents memory issues
+    options.add_argument("--headless")  # Run Chrome in headless mode
+    options.add_argument("--disable-gpu")  # Avoid GPU-related errors
+    options.add_argument("--user-data-dir=/tmp/chrome-user-data")  # Set a unique profile directory
+    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+    # Download here https://googlechromelabs.github.io/chrome-for-testing/
+    if sys.platform == "darwin":
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-mac-arm64/chromedriver")
+    elif "win" in sys.platform and sys.platform != "darwin":
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-win64/chromedriver.exe")
+    elif "linux" in sys.platform:
+        path = os.path.join(os.path.dirname(__file__), "chromedriver-linux64/chromedriver")
+    print(f"Platform: {sys.platform}")
+    print(f"Using chromedriver at: {path}")
+    print(f"Checking if chromedriver exists: {os.path.exists(path)}")
+    print(f"*********Using docker options... ***********")
+    service = Service(executable_path=path)  # Update path to chromedriver
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
+
+def get_driver_docker_no_binary():
+    print(f"Platform: {sys.platform}")
+    print(f"Using chromedriver without specifying binary ... the docker way... ")
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    options = Options()
+    options.add_argument("start-maximized")
+    options.add_argument("--no-sandbox")  # Required in Docker
+    options.add_argument("--disable-dev-shm-usage")  # Prevents memory issues
+    options.add_argument("--headless")  # Run Chrome in headless mode
+    options.add_argument("--disable-gpu")  # Avoid GPU-related errors
+    options.add_argument("--user-data-dir=/tmp/chrome-user-data")  # Set a unique profile directory
+    driver = webdriver.Chrome(options=options)
     return driver
 
 xpath_input_email = '/html/body/div[1]/ws-card-loading-indicator/div/div/div/div/ng-transclude/div/layout/div/div[2]/main/login-wizard/wizard/div/div/ng-transclude/form/ws-micro-app-loader/login-form/span/div/span/div/div/div[2]/div[1]/div[1]/div/div[1]/input'
@@ -79,11 +123,25 @@ class Client():
         self.url_home = url_home
         try:
             self.driver = get_driver()
+            self.driver.get(self.url_login)
         except Exception as e:
             print(f"Error: {e}")
-            print("====================="*4)
-            print("Continuing without driver....")
-            self.driver = None
+            print("===========1=========="*4)
+            print("Trying to use docker way...")
+            try:
+                self.driver = get_driver_docker()
+                self.driver.get(self.url_login)
+            except Exception as e:
+                print(f"Error: {e}")
+                print("===========2=========="*4)
+                print("Trying to use unspecified driver...")
+                try:
+                    self.driver = get_driver_docker_no_binary()
+                    self.driver.get(self.url_login)
+                except Exception as e:
+                    print(f"Error: {e}")
+                    print("Could not start webdriver, exiting...")
+                    raise Exception("Could not start webdriver, exiting...")
         self.windows = {}
         self.bearer_token = ""
         self.cookies = None
