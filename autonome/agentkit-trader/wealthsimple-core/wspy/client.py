@@ -204,6 +204,15 @@ class Client():
         main_window = self.driver.current_window_handle
         self.windows["main"] = main_window
 
+    def open_authenticated_window(self, bearer, cookie):
+        self.bearer_token = bearer
+        self.session_cookie = cookie
+        self.driver.execute_cdp_cmd('Network.enable', {})
+        self.driver.execute_cdp_cmd('Network.setExtraHTTPHeaders', {'headers': {
+            'Cookie': self.session_cookie
+        }})
+        self.driver.get(self.url_home)
+
     def login(self, email, password, duration=30, repeat=1):
         if "main" not in self.windows:
             self.open_main_window(url=self.url_login)
