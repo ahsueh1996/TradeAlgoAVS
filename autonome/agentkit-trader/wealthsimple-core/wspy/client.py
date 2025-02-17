@@ -262,6 +262,15 @@ class Client():
         main_window = self.driver.current_window_handle
         self.windows["main"] = main_window
 
+    def open_authenticated_window(self, bearer, cookie):
+        self.bearer_token = bearer
+        self.session_cookie = cookie
+        self.driver.execute_cdp_cmd('Network.enable', {})
+        self.driver.execute_cdp_cmd('Network.setExtraHTTPHeaders', {'headers': {
+            'Cookie': self.session_cookie
+        }})
+        self.driver.get(self.url_home)
+
     def login(self, email, password, duration=30, repeat=1):
         if "main" not in self.windows:
             self.open_main_window(url=self.url_login)
@@ -293,6 +302,7 @@ class Client():
                                 # update bearer token
                                 self.bearer_token = response_body["access_token"]
                                 self.login_status = "OK"
+                                self.thread_keep_alive()
                                 return self.login_status
                             elif "error" in response_body and "headers" in response:
                                 response_headers = response['headers']
@@ -334,6 +344,7 @@ class Client():
                                 # update bearer token
                                 self.bearer_token = response_body["access_token"]
                                 self.login_status = "OK"
+                                self.thread_keep_alive()
                                 return self.login_status
                             elif "error" in response_body and "headers" in response:
                                 response_headers = response['headers']
@@ -630,7 +641,8 @@ class Client():
             'shel': 'sec-s-146d4c88a1264c0c9088ef82691921d5',
             'es': 'sec-s-40ae0815aea641b0b448596ebd95f706',
             'wmt': 'sec-s-507c1d7a767b424b9319345fabfd4434',
-            'wyhg': 'sec-s-af94dc8442cd42b19b944c688cfcd803'
+            'wyhg': 'sec-s-af94dc8442cd42b19b944c688cfcd803',
+            'dkng': 'sec-s-9e790811727e4399a28cd7c6ef57703b'
             }
     
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -645,13 +657,86 @@ class Client():
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+'''
 class Strategy():
-    def run():
+    def __init__(self, **kwargs):
+        self.broker = kwargs['broker']
+        self.thread_run = None
+
+    def run(self, **kwargs):
+        # This function starts the thread running the strategy
+        print("[Strategy] Starting _run thread....")
+        if self.thread_run:
+            print("[Strategy] There's already a _run thread.")
+            return
+        self.thread_run = threading.Thread(target=self._run, kwargs=kwargs).start()
+
+
+    def _run(self, **kwargs):
         raise NotImplementedError
     
-    def report():
-        raise NotImplementedError
+    def report(self):
+        net_deposit = self.report_data[-1]['net_deposit']
+        net_value = self.report_data[-1]['net_value']
+        max_drawdown = 99999999999999999999999999
+        max_exposure = 0
+        for block in self.report_data:
+            max_drawdown = min(max_drawdown, block['drawdown'])
+            max_exposure = max(max_exposure, block['exposure'])
+        roi = net_value/net_deposit*100
+
+        return {
+            'net_deposit': net_deposit,
+            'net_value': net_value,
+            'max_drawdown': max_drawdown,
+            'max_exposure': max_exposure,
+            'roi': roi,
+            'data': self.report_data
+        }
+    
+    def add_report_block(self, net_deposit, net_value, total_book_value, total_cash):
+        if self.report_data == None:
+            self.report_data = []
+        self.report_data.append({
+                'timestamp': 'utctime:str',
+                'net_deposit': net_deposit,
+                'net_value': net_value,
+                'drawdown': net_value-net_deposit, # net_value-net_deposit
+                'exposure': total_book_value, # the total book value of all holdings
+                'cash': total_cash            
+        })
+        return
+
     
 
 class AgenticStrategy(Strategy):
-    pass
+
+    def _run(self, **kwargs):
+        deposit = kwargs.get('deposit', 10000)
+        duration = kwargs.get('task_duration', 60*60)
+        symbols = kwargs.get('symbols',['spy','appl'])
+        symbols = [symbol.lower() for symbol in symbols]
+
+        self.positions = {}
+        for symbol in symbols:
+            self.positions[symbol] = {
+                'size': 0,
+                'cost': 0,
+            }
+
+        self.add_report_block(deposit, deposit, 0, deposit)
+        
+
+        start = time.time
+        cycle = 0
+        while time.time-start < duration:
+            i = cycle%len(symbols)
+            symbol = symbols[i]
+            if self.positions[symbol]['size']==0:
+                budget = min(self.report_data[-1]['net_deposit']/10, self.report_data[-1]['cash'])
+                shares, cost, bv = self.client.mock_buy(budget)
+                cash = self.report_data[-1]['cash']-bv
+                self.positions[symbol]['size']=shares
+                self.positions[symbol]['cost']=cost
+                self.add_report_block(deposit,cash+)
+'''

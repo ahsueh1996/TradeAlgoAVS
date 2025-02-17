@@ -24,8 +24,9 @@ load_dotenv()
 def initialize_agent():
     """Initialize the agent with CDP Agentkit."""
     # Initialize LLM.
-    # llm = ChatOpenAI(model="gpt-3.5-turbo-1106")
-    llm = ChatOpenAI(model="gpt-4o-mini")
+    # llm = ChatOpenAI(model="gpt-4o")   # 30K Token Limit
+    llm = ChatOpenAI(model="gpt-4o-mini") # 200K Token Limit
+    # llm = ChatOpenAI(model="gpt-3.5-turbo") # 200K Token Limit
 
     # ===========================================================================================
     #                                       CDP Agentkit Tools

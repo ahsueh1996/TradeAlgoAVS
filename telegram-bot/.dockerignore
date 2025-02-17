@@ -1,0 +1,20 @@
+# Node.js dependencies (should be installed inside the container)
+node_modules
+
+# Ignore local environment variables
+.env
+
+# Logs and temporary files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git
+.git
+.gitignore
+
+# OS-specific files
+.DS_Store
+Thumbs.db
